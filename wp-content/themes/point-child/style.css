@@ -57,3 +57,26 @@ body {
 .featured-cat.sponsored {
   background: #dd3333;
 }
+
+/* FEATURES */
+.firstpost {
+  float: none;
+  margin: 0;
+  max-width: 100%;
+}
+
+.firstpost img {
+  width: 900px;
+  width: auto;
+  display: inline-block;
+  text-align: left;
+}
+
+.featuredBox {
+  text-align: center;
+}
+
+.secondpost,
+.thirdpost {
+  display: none;
+}
