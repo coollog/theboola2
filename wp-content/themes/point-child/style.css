@@ -64,12 +64,12 @@ body {
   margin: 0;
   max-width: 100%;
   width: auto;
+  display: inline-block;
+  text-align: left;
 }
 
 .firstpost img {
   width: 900px;
-  display: inline-block;
-  text-align: left;
 }
 
 .featuredBox {
