@@ -63,11 +63,11 @@ body {
   float: none;
   margin: 0;
   max-width: 100%;
+  width: auto;
 }
 
 .firstpost img {
   width: 900px;
-  width: auto;
   display: inline-block;
   text-align: left;
 }
