@@ -76,6 +76,10 @@ body {
   text-align: center;
 }
 
+.featured-excerpt {
+  display: none;
+}
+
 .secondpost,
 .thirdpost {
   display: none;
