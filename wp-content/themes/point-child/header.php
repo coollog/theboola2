@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<?php $mts_options = get_option('point'); ?>
+<?php 
+	$mts_options = get_option('point'); 
+	$mts_options['mts_featured_slider'] = true;
+?>
 <html class="no-js" <?php language_attributes(); ?>>
 <head>
 	<meta charset="<?php bloginfo('charset'); ?>">
