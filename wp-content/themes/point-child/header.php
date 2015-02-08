@@ -1,8 +1,5 @@
 <!DOCTYPE html>
-<?php 
-	$mts_options = get_option('point'); 
-	$mts_options['mts_featured_slider'] = true;
-?>
+<?php $mts_options = get_option('point'); ?>
 <html class="no-js" <?php language_attributes(); ?>>
 <head>
 	<meta charset="<?php bloginfo('charset'); ?>">
@@ -15,6 +12,23 @@
 	<?php mts_meta(); ?>
 	<link rel="pingback" href="<?php bloginfo( 'pingback_url' ); ?>" />
 	<?php wp_head(); ?>
+
+	<script>
+		var featured = 0;
+		jQuery(function() {
+			rotate(featured);
+		});
+
+		function rotate(index) {
+			$('.featuredpost').each(function() {
+				var i = jQuery(this).attr('index'),
+						left = (i - index) * 1000;
+				jQuery(this).css('left', left.toString() + 'px');
+			});
+
+			featured = index;
+		}
+	</script>
 </head>
 <body id ="blog" <?php body_class('main'); ?>>
 	<div class="main-container">
@@ -115,14 +129,14 @@
 				<div class="featuredBox">
 					<?php $i = 1;
 						// prevent implode error
-                        if (empty($mts_options['mts_featured_slider_cat']) || !is_array($mts_options['mts_featured_slider_cat'])) {
-                            $mts_options['mts_featured_slider_cat'] = array('0');
-                        }
+            if (empty($mts_options['mts_featured_slider_cat']) || !is_array($mts_options['mts_featured_slider_cat'])) {
+              $mts_options['mts_featured_slider_cat'] = array('0');
+            }
 						$slider_cat = implode(",", $mts_options['mts_featured_slider_cat']);
 						$my_query = new WP_Query('cat='.$slider_cat.'&posts_per_page=4&ignore_sticky_posts=1'); 
 						while ($my_query->have_posts()) : $my_query->the_post(); ?>
-						<?php if($i == 1){ ?> 
-							<div class="firstpost excerpt">
+						<?php if($i >= 1 and $i <= 4){ ?> 
+							<div class="featuredpost firstpost excerpt" index="<?php echo $i - 1; ?>">
 								<a href="<?php the_permalink() ?>" title="<?php the_title(); ?>" rel="nofollow" id="first-thumbnail">
 									<?php if ( has_post_thumbnail() ) { ?> 
 										<?php the_post_thumbnail('bigthumb',array('title' => '')); ?>
@@ -136,38 +150,7 @@
 										<span class="f-excerpt"><?php echo mts_excerpt(10);?></span>
 									</p>
 								</a>
-							</div><!--.post excerpt-->
-						<?php } elseif($i == 2) { ?>
-							<div class="secondpost excerpt">
-								<a href="<?php the_permalink() ?>" title="<?php the_title(); ?>" rel="nofollow" id="second-thumbnail">
-									<?php if ( has_post_thumbnail() ) { ?> 
-										<?php the_post_thumbnail('mediumthumb',array('title' => '')); ?>
-									<?php } else { ?>
-										<div class="featured-thumbnail">
-											<img src="<?php echo get_template_directory_uri(); ?>/images/mediumthumb.png" class="attachment-featured wp-post-image" alt="<?php the_title(); ?>">
-										</div>
-									<?php } ?>
-									<p class="featured-excerpt">
-										<span class="featured-title"><?php the_title(); ?></span>
-									</p>
-								</a>
-							</div><!--.post excerpt-->
-						<?php } elseif($i == 3 || $i == 4) { ?>
-							<div class="thirdpost excerpt">
-								<a href="<?php the_permalink() ?>" title="<?php the_title(); ?>" rel="nofollow" id="third-thumbnail">
-									<?php if ( has_post_thumbnail() ) { ?> 
-										<?php the_post_thumbnail('smallthumb',array('title' => '')); ?>
-									<?php } else { ?>
-										<div class="featured-thumbnail">
-											<img src="<?php echo get_template_directory_uri(); ?>/images/smallfthumb.png" class="attachment-featured wp-post-image" alt="<?php the_title(); ?>">
-										</div>
-									<?php } ?>
-									<p class="featured-excerpt">
-										<span class="featured-title"><?php the_title(); ?></span>
-									</p>
-								</a>
-							</div><!--.post excerpt-->
-						<?php } ?>                   
+							</div><!--.post excerpt-->                  
 					<?php $i++; endwhile; wp_reset_query(); ?> 
 				</div>
 			<?php } ?>

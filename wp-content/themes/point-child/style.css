@@ -59,13 +59,14 @@ body {
 }
 
 /* FEATURES */
-.firstpost {
+.featuredpost {
   float: none;
   margin: 0;
   max-width: 100%;
   width: auto;
-  display: inline-block;
+  display: block;
   text-align: left;
+  position: absolute;
 }
 
 .firstpost img {
@@ -74,6 +75,8 @@ body {
 
 .featuredBox {
   text-align: center;
+  position: relative;
+  height: 450px;
 }
 
 .featured-excerpt {
