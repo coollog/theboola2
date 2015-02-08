@@ -150,7 +150,8 @@
 										<span class="f-excerpt"><?php echo mts_excerpt(10);?></span>
 									</p>
 								</a>
-							</div><!--.post excerpt-->                  
+							</div><!--.post excerpt-->   
+						<?php } ?>
 					<?php $i++; endwhile; wp_reset_query(); ?> 
 				</div>
 			<?php } ?>
