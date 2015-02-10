@@ -86,6 +86,6 @@
     </article>
     <!-- End Article -->
     <!-- Start Sidebar -->
-    <?php get_sidebar(); ?>
+    <?php //get_sidebar(); ?>
     <!-- End Sidebar -->
     <?php get_footer(); ?>
