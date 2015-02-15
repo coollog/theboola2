@@ -90,6 +90,6 @@ body {
 
 /* CONTENT */
 
-.single {
+.article < .single_post {
     width: 100%;
 }
