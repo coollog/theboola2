@@ -3,7 +3,7 @@
 <div id="page" class="single">
   <div class="content">
     <!-- Start Article -->
-    <article class="article">   
+    <article class="article" <?php if (is_post()) echo 'style="width:100%;"'; ?>>
       <?php if ( have_posts() ) while ( have_posts() ) : the_post(); ?>
         <div id="post-<?php the_ID(); ?>" <?php post_class('post'); ?>>
           <div class="single_post">
