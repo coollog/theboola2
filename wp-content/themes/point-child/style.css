@@ -90,6 +90,6 @@ body {
 
 /* CONTENT */
 
-.article < .single_post {
+.article .single_post:parent {
     width: 100%;
 }
