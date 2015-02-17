@@ -74,7 +74,7 @@
 				<style>
 					.socialmediabuttons {
 						position: absolute;
-						bottom: 50px;
+						bottom: 0;
 						right: 100px;
 					}
 					.socialmediabuttons img {
@@ -92,21 +92,22 @@
 					<a href="https://www.linkedin.com/company/5160903"><img src="http://theboola.com/wp-content/uploads/2015/02/pic3.png" /></a>
 					<a href="mailto:diane.kim@yale.edu"><img src="http://theboola.com/wp-content/uploads/2015/02/pic4.png" /></a>
 				</div>
-
-				<div class="secondary-navigation">
-					<nav id="navigation" >
-						<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
-							<?php $walker = new mts_Walker; wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker ) ); ?>
-						<?php } else { ?>
-							<ul class="menu">
-								<?php wp_list_categories('title_li='); ?>
-							</ul>
-						<?php } ?>
-						<a href="#" id="pull"><?php _e('Menu','mythemeshop'); ?></a>
-					</nav>
-				</div>
-			</div>
 		</header>
+
+		<div class="secondary-navigation">
+				<nav id="navigation" >
+					<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
+						<?php $walker = new mts_Walker; wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker ) ); ?>
+					<?php } else { ?>
+						<ul class="menu">
+							<?php wp_list_categories('title_li='); ?>
+						</ul>
+					<?php } ?>
+					<a href="#" id="pull"><?php _e('Menu','mythemeshop'); ?></a>
+				</nav>
+			</div>
+		</div>
+
 		<?php if ($mts_options['mts_header_adcode'] != '') { ?>
 			<div class="header-bottom-second">
 				<?php echo '<div id="header-widget-container">';

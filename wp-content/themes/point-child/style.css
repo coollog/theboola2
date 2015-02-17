@@ -87,3 +87,26 @@ body {
 .thirdpost {
   display: none;
 }
+
+/* GET RID OF MARGINS */
+
+.main-header {
+  max-width: none;
+}
+#header {
+  padding: 0;
+  width: 100%;
+}
+
+.main-container {
+  width: auto;
+  max-width: none;
+}
+
+#page {
+  max-width: none;
+}
+
+.sidebar {
+  max-width: none;
+}
