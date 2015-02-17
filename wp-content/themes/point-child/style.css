@@ -107,6 +107,6 @@ body {
   max-width: none;
 }
 
-.sidebar {
+.sidebar, .sidebar.c-4-12 {
   max-width: none;
 }
