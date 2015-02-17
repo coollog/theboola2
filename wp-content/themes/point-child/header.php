@@ -136,7 +136,7 @@
 						$slider_cat = implode(",", $mts_options['mts_featured_slider_cat']);
 						$my_query = new WP_Query('cat='.$slider_cat.'&posts_per_page=4&ignore_sticky_posts=1'); 
 						while ($my_query->have_posts()) : $my_query->the_post(); ?>
-						<?php if($i >= 1 and $i <= 4){ ?> 
+						<?php if($i >= 1 and $i <= /*4*/1){ ?> 
 							<div class="featuredpost firstpost excerpt" index="<?php echo $i - 1; ?>">
 								<a href="<?php the_permalink() ?>" title="<?php the_title(); ?>" rel="nofollow" id="first-thumbnail">
 									<?php if ( has_post_thumbnail() ) { ?> 
