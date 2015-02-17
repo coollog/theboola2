@@ -16,7 +16,7 @@ if ( !current_user_can('edit_pages') && !current_user_can('edit_posts') )
     
     <script language="javascript" type="text/javascript" src="<?php echo includes_url(); ?>js/jquery/jquery.js"></script>
     <?php include('shortcodes.php'); ?>
-	<script language="javascript" type="text/javascript" src="<?php echo plugin_dir_url(__FILE__); ?>tinymce.js"></script>
+	<script language="javascript" type="text/javascript" src="<?php echo plugin_dir_url(__FILE__); ?>tinymce.js?v=1.3"></script>
 	<base target="_self" />
     <link rel="stylesheet" type="text/css" href="<?php echo  plugin_dir_url(__FILE__); ?>editor_plugin.css" media="all" />
 </head>

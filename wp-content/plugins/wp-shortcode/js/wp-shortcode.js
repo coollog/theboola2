@@ -25,4 +25,14 @@ jQuery(document).ready(function($){
             });
         });
     }
+
+    if ($('.wp_shortcodes_tooltip').length) {
+        $('.wp_shortcodes_tooltip').each(function(index, el) {
+            var $this = $(this),
+                ttgravity = $this.data('gravity'),
+                ttfade = Boolean($this.data('fade'));
+            $this.tipsy({gravity: ttgravity, fade: ttfade});
+        });
+    }
+
 });

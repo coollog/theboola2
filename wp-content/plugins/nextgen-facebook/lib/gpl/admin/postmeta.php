@@ -22,6 +22,7 @@ if ( ! class_exists( 'NgfbGplAdminPostmeta' ) ) {
 
 		public function filter_meta_header_rows( $rows, $form, $post_info ) {
 			$post_status = get_post_status( $post_info['id'] );
+			$post_type = get_post_type( $post_info['id'] );
 
 			$rows[] = '<td colspan="2" align="center">'.$this->p->msgs->get( 'pro-feature-msg' ).'</td>';
 
@@ -66,9 +67,10 @@ if ( ! class_exists( 'NgfbGplAdminPostmeta' ) ) {
 				'<td class="blank">'.$this->p->webpage->get_description( $this->p->options['tc_desc_len'], '...', true ).'</td>';
 
 			if ( $this->p->options['plugin_display'] == 'all' ) {
-				if ( $post_status == 'publish' )
-					$rows[] = $this->p->util->th( 'Sharing URL', 'medium', 'postmeta-sharing_url', $post_info ).
-					'<td class="blank">'.$this->p->util->get_sharing_url( true ).'</td>';
+				if ( $post_status == 'publish' || 
+					$post_type == 'attachment' )
+						$rows[] = $this->p->util->th( 'Sharing URL', 'medium', 'postmeta-sharing_url', $post_info ).
+						'<td class="blank">'.$this->p->util->get_sharing_url( true ).'</td>';
 				else
 					$rows[] = $this->p->util->th( 'Sharing URL', 'medium', 'postmeta-sharing_url', $post_info ).
 					'<td class="blank"><em>The Sharing URL permalink will be available when the '.$post_info['ptn'].' is published.</em></td>';
@@ -84,7 +86,7 @@ if ( ! class_exists( 'NgfbGplAdminPostmeta' ) ) {
 			$rows[] = '<td colspan="2" class="subsection"><h4 style="margin-top:0;">All Social Websites (Open Graph)</h4></td>';
 
 			$rows[] = $this->p->util->th( 'Image Dimensions', 'medium', 'og_img_dimensions' ).
-			'<td class="blank">'.$form->get_img_dim_text( 'og_img', true ).'</td>';
+			'<td class="blank">'.$form->get_image_dimensions_text( 'og_img', true ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Image ID', 'medium', 'postmeta-og_img_id', $post_info ).
 			'<td class="blank">&nbsp;</td>';
@@ -112,7 +114,7 @@ if ( ! class_exists( 'NgfbGplAdminPostmeta' ) ) {
 				$rows[] = '<td colspan="2" class="subsection"><h4>Pinterest (Rich Pin)</h4></td>';
 
 				$rows[] = $this->p->util->th( 'Image Dimensions', 'medium', 'rp_img_dimensions' ).
-				'<td class="blank">'.$form->get_img_dim_text( 'rp_img', true ).'</td>';
+				'<td class="blank">'.$form->get_image_dimensions_text( 'rp_img', true ).'</td>';
 
 				$rows[] = $this->p->util->th( 'Image ID', 'medium', 'postmeta-rp_img_id', $post_info ).
 				'<td class="blank">&nbsp;</td>';

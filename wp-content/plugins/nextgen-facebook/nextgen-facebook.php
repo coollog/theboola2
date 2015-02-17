@@ -8,8 +8,8 @@
  * License URI: http://www.gnu.org/licenses/gpl.txt
  * Description: Display your content in the best possible way on Facebook, Google+, Twitter, Pinterest, etc. - no matter how your webpage is shared!
  * Requires At Least: 3.0
- * Tested Up To: 4.0
- * Version: 7.7.0.2
+ * Tested Up To: 4.1
+ * Version: 7.7.5.6
  * 
  * Copyright 2012-2014 - Jean-Sebastien Morisset - http://surniaulula.com/
  */
@@ -43,31 +43,21 @@ if ( ! class_exists( 'Ngfb' ) ) {
 		public $webpage;		// SucomWebpage (title, desc, etc., plus shortcodes)
 
 		/**
-		 * Reference Variables (config, options, addon objects, etc.)
+		 * Reference Variables (config, options, modules, etc.)
 		 */
 		public $cf = array();		// config array defined in construct method
 		public $is_avail = array();	// assoc array for other plugin checks
 		public $options = array();	// individual blog/site options
 		public $site_options = array();	// multisite options
-		public $addons = array();	// pro and gpl addons
+		public $mods = array();		// pro and gpl modules
+		public $addons;			// addons variable is deprecated
 
 		/**
 		 * Ngfb Constructor
-		 *
-		 * Uses NgfbConfig's static methods to read configuration
-		 * values into the $cf array, define constants, and require
-		 * essential library files. Instantiates the NgfbRegister
-		 * class, to register the activation / deactivation / uninstall
-		 * hooks, along with adding the wpmu_new_blog and
-		 * wpmu_activate_blog action hooks.
-		 *
-		 * set_config() is hooked into 'init' at -1 to allow other
-		 * plugins to extend the $cf array as early as possible.
-		 *
-		 * @access public
-		 * @return Ngfb
 		 */
 		public function __construct() {
+			$this->addons =& $this->mods;			// addons variable is deprecated
+
 			require_once( dirname( __FILE__ ).'/lib/config.php' );
 			require_once( dirname( __FILE__ ).'/lib/register.php' );
 
@@ -117,6 +107,7 @@ if ( ! class_exists( 'Ngfb' ) ) {
 							'echo "<!-- ngfb add_action( \''.$action.'\' ) priority '.$prio.' test = PASSED -->\n";' ), $prio );
 						add_action( $action, array( &$this, 'show_debug_html' ), $prio );
 					}
+			do_action( 'ngfb_init_plugin' );
 		}
 
 		public function show_debug_html() { 
@@ -137,9 +128,10 @@ if ( ! class_exists( 'Ngfb' ) ) {
 			$html_debug = ! empty( $this->options['plugin_debug'] ) || 
 				( defined( 'NGFB_HTML_DEBUG' ) && NGFB_HTML_DEBUG ) ? true : false;
 			$wp_debug = defined( 'NGFB_WP_DEBUG' ) && NGFB_WP_DEBUG ? true : false;
-			if ( $html_debug || $wp_debug )
-				$this->debug = new SucomDebug( $this, 
-					array( 'html' => $html_debug, 'wp' => $wp_debug ) );
+
+			if ( ( $html_debug || $wp_debug ) && 
+				( $classname = NgfbConfig::load_lib( false, 'com/debug', 'SucomDebug' ) ) !== false )
+					$this->debug = new $classname( $this, array( 'html' => $html_debug, 'wp' => $wp_debug ) );
 			else $this->debug = new NgfbNoDebug();			// fallback to dummy debug class
 
 			$this->notice = new SucomNotice( $this );
@@ -151,22 +143,17 @@ if ( ! class_exists( 'Ngfb' ) ) {
 			$this->webpage = new SucomWebpage( $this );		// title, desc, etc., plus shortcodes
 			$this->media = new NgfbMedia( $this );			// images, videos, etc.
 			$this->head = new NgfbHead( $this );			// open graph and twitter card meta tags
+			$this->og = new NgfbOpengraph( $this );			// prepare open graph array
 
 			if ( is_admin() ) {
 				$this->msgs = new NgfbMessages( $this );	// admin tooltip messages
 				$this->admin = new NgfbAdmin( $this );		// admin menus and page loader
 			}
 
-			if ( $this->is_avail['opengraph'] )
-				$this->og = new NgfbOpengraph( $this );		// prepare open graph array
-			else $this->og = new SucomOpengraph( $this );		// read open graph html tags
-
 			if ( $this->is_avail['ssb'] )
 				$this->sharing = new NgfbSharing( $this );	// wp_head and wp_footer js and buttons
 
 			$this->loader = new NgfbLoader( $this );
-
-			do_action( 'ngfb_init_addon' );
 
 			/*
 			 * check and create the default options array

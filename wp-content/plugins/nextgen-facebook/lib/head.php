@@ -19,7 +19,7 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			$this->p->util->add_plugin_filters( $this, array( 
 				'head_cache_salt' => 2,		// modify the cache salt for certain crawlers
 			) );
-			add_filter( 'language_attributes', array( &$this, 'add_doctype' ) );
+			add_filter( 'language_attributes', array( &$this, 'add_doctype' ), 100, 1 );
 			add_action( 'wp_head', array( &$this, 'add_header' ), NGFB_HEAD_PRIORITY );
 		}
 
@@ -58,8 +58,18 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 
 			$item_type = apply_filters( $this->p->cf['lca'].'_doctype_schema_type', $item_type, $post_id, $obj );
 
-			if ( strpos( $doctype, ' itemscope itemtype="http://schema.org/' ) === false )
-				$doctype .= ' itemscope itemtype="http://schema.org/'.$item_type.'"';
+			if ( ! empty( $item_type ) ) {
+				if ( strpos( $doctype, ' itemscope="itemscope" ' ) !== false )
+					$doctype = preg_replace( '/ itemscope="itemscope" /', 
+						' itemscope ', $doctype );
+				elseif ( strpos( $doctype, ' itemscope ' ) === false )
+					$doctype .= ' itemscope ';
+
+				if ( strpos( $doctype, ' itemtype="http://schema.org/' ) !== false )
+					$doctype = preg_replace( '/ itemtype="http:\/\/schema.org\/[^"]+"/',
+						' itemtype="http://schema.org/'.$item_type.'"', $doctype );
+				else $doctype .= ' itemtype="http://schema.org/'.$item_type.'"';
+			}
 
 			return $doctype;
 		}
@@ -75,33 +85,38 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 
 		// called by wp_head action
 		public function add_header() {
+			$lca = $this->p->cf['lca'];
+
 			// add various function test results top-most in the debug log
 			// hook into ngfb_is_functions to extend the default array of function names
 			if ( $this->p->debug->is_on() ) {
 				$is_functions = array( 
-					'is_multisite',
-					'is_author',
 					'is_archive',
-					'is_category',
-					'is_tag',
-					'is_tax',
-					'is_home',
-					'is_search',
-					'is_singular',
 					'is_attachment',
+					'is_author',
+					'is_category',
+					'is_front_page',
+					'is_home',
+					'is_multisite',
+					'is_page',
 					'is_product',
 					'is_product_category',
 					'is_product_tag',
+					'is_search',
+					'is_single',
+					'is_singular',
+					'is_tag',
+					'is_tax',
 				);
-				$is_functions = apply_filters( $this->p->cf['lca'].'_is_functions', $is_functions );
+				$is_functions = apply_filters( $lca.'_is_functions', $is_functions );
 				foreach ( $is_functions as $function ) 
 					if ( function_exists( $function ) && $function() )
 						$this->p->debug->log( $function.'() = true' );
 			}
 
-			if ( $this->p->is_avail['metatags'] ) {
-				echo $this->get_header_html();
-			} else echo "\n<!-- ".$this->p->cf['lca']." meta tags are disabled -->\n";
+			if ( $this->p->is_avail['metatags'] )
+				echo $this->get_header_html( apply_filters( $lca.'_header_use_post', false ) );
+			else echo "\n<!-- ".$lca." meta tags are disabled -->\n";
 
 			// include additional information when debug mode is on
 			if ( $this->p->debug->is_on() ) {
@@ -126,8 +141,8 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 				// on singular webpages, show the custom social settings
 				if ( is_singular() && ( $obj = $this->p->util->get_post_object() ) !== false ) {
 					$post_id = empty( $obj->ID ) || empty( $obj->post_type ) ? 0 : $obj->ID;
-					if ( ! empty( $post_id ) && isset( $this->p->addons['util']['postmeta'] ) ) {
-						$meta_opts = $this->p->addons['util']['postmeta']->get_options( $post_id );
+					if ( ! empty( $post_id ) && isset( $this->p->mods['util']['postmeta'] ) ) {
+						$meta_opts = $this->p->mods['util']['postmeta']->get_options( $post_id );
 						$this->p->debug->show_html( $meta_opts, 'ngfb post meta options for post id '.$post_id );
 					}
 				}
@@ -184,6 +199,7 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			$obj = $this->p->util->get_post_object( $use_post );
 			$post_id = empty( $obj->ID ) || empty( $obj->post_type ) || 
 				( ! is_singular() && $use_post === false ) ? 0 : $obj->ID;
+			$this->p->debug->log( 'post_id value set to '.$post_id );
 			$sharing_url = $this->p->util->get_sharing_url( $use_post );
 			$author_id = false;
 
@@ -229,8 +245,7 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			 *
 			 * The Twitter Card meta tags are added by the NgfbHeadTwittercard class using an 'ngfb_og' filter hook.
 			 */
-			if ( $this->p->is_avail['opengraph'] )
-				$meta_og = $this->p->og->get_array( $meta_og, $use_post );
+			$meta_og = $this->p->og->get_array( $meta_og, $use_post );
 
 			/**
 			 * Name / SEO meta tags
@@ -238,7 +253,7 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			$meta_name = array();
 			if ( isset( $this->p->options['seo_author_name'] ) && 
 				$this->p->options['seo_author_name'] !== 'none' )
-					$meta_name['author'] = $this->p->addons['util']['user']->get_author_name( $author_id, $this->p->options['seo_author_name'] );
+					$meta_name['author'] = $this->p->mods['util']['user']->get_author_name( $author_id, $this->p->options['seo_author_name'] );
 
 			$meta_name['description'] = $this->p->webpage->get_description( $this->p->options['seo_desc_len'], 
 				'...', $use_post, true, false, true, 'seo_desc' );	// add_hashtags = false, custom meta = seo_desc
@@ -251,7 +266,7 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			$link_rel = array();
 
 			if ( ! empty( $author_id ) )
-				$link_rel['author'] = $this->p->addons['util']['user']->get_author_website_url( $author_id, $this->p->options['link_author_field'] );
+				$link_rel['author'] = $this->p->mods['util']['user']->get_author_website_url( $author_id, $this->p->options['link_author_field'] );
 
 			if ( ! empty( $this->p->options['link_publisher_url'] ) )
 				$link_rel['publisher'] = $this->p->options['link_publisher_url'];
@@ -263,19 +278,23 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 			 */
 			$meta_schema = array();
 
-			if ( ! empty( $this->p->options['add_meta_itemprop_image'] ) ) {
-				if ( ! empty( $meta_og['og:image'] ) ) {
-					if ( is_array( $meta_og['og:image'] ) &&
-						count( $meta_og['og:image'] ) > 0 ) {
-						$image = reset( $meta_og['og:image'] );
-						$meta_schema['image'] = $image['og:image'];
-					} else $meta_schema['image'] = $meta_og['og:image'];
-				}
-			}
-
 			if ( ! empty( $this->p->options['add_meta_itemprop_description'] ) ) {
 				$meta_schema['description'] = $this->p->webpage->get_description( $this->p->options['og_desc_len'], 
 					'...', $use_post, true, true, true, 'schema_desc' );	// custom meta = schema_desc
+			}
+
+			if ( ! empty( $this->p->options['add_meta_itemprop_url'] ) ) {
+				if ( ! empty( $meta_og['og:url'] ) )
+					$meta_schema['url'] = $meta_og['og:url'];
+			}
+
+			if ( ! empty( $this->p->options['add_meta_itemprop_image'] ) ) {
+				if ( ! empty( $meta_og['og:image'] ) ) {
+					if ( is_array( $meta_og['og:image'] ) )
+						foreach ( $meta_og['og:image'] as $image )
+							$meta_schema['image'][] = $image['og:image'];
+					else $meta_schema['image'] = $meta_og['og:image'];
+				}
 			}
 
 			$meta_schema = apply_filters( $lca.'_meta_schema', $meta_schema, $use_post, $obj );
@@ -305,8 +324,10 @@ if ( ! class_exists( 'NgfbHead' ) ) {
 		 * Loops through the arrays (1 to 3 dimensions) and calls get_single_tag() for each
 		 */
 		private function get_tag_array( $tag = 'meta', $type = 'property', $tag_array, $use_post = false ) {
-			$this->p->debug->log( count( $tag_array ).' '.$tag.' '.$type.' to process' );
-			$this->p->debug->log( $tag_array );
+			if ( $this->p->debug->is_on() ) {
+				$this->p->debug->log( count( $tag_array ).' '.$tag.' '.$type.' to process' );
+				$this->p->debug->log( $tag_array );
+			}
 			$ret = array();
 			if ( empty( $tag_array ) )
 				return $ret;

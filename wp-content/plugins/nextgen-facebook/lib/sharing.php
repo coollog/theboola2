@@ -579,7 +579,9 @@ jQuery("#ngfb-sidebar").click( function(){
 
 			echo '<style type="text/css">'.$css_data.'</style>', "\n";
 			echo '<table class="sucom-setting side"><tr><td>';
-			if ( get_post_status( $post->ID ) == 'publish' ) {
+			if ( get_post_status( $post->ID ) === 'publish' || 
+				get_post_type( $post->ID ) === 'attachment' ) {
+
 				$content = '';
 				echo $this->get_js_loader();
 				echo $this->get_js( 'header' );
@@ -605,7 +607,7 @@ jQuery("#ngfb-sidebar").click( function(){
 			return $this->get_buttons( $text, 'content' );
 		}
 
-		public function get_buttons( &$text, $type = 'content', $use_post = true ) {
+		public function get_buttons( &$text, $type = 'content', $use_post = true, $buttons_pos = '' ) {
 
 			// should we skip the sharing buttons for this content type or webpage?
 			if ( is_admin() ) {
@@ -614,7 +616,7 @@ jQuery("#ngfb-sidebar").click( function(){
 					return $text;
 				}
 			} elseif ( is_feed() ) {
-				$this->p->debug->log( $type.' filter skipped: no buttons allowed in RSS feeds'  );
+				$this->p->debug->log( $type.' filter skipped: no buttons allowed in rss feeds'  );
 				return $text;
 			} else {
 				if ( ! is_singular() && empty( $this->p->options['buttons_on_index'] ) ) {
@@ -681,9 +683,10 @@ jQuery("#ngfb-sidebar").click( function(){
 				}
 			}
 
-			// just in case
-			$buttons_pos = empty( $this->p->options['buttons_pos_'.$type] ) ? 
-				'bottom' : $this->p->options['buttons_pos_'.$type];
+			if ( empty( $buttons_pos ) ) {
+				$buttons_pos = empty( $this->p->options['buttons_pos_'.$type] ) ? 
+					'bottom' : $this->p->options['buttons_pos_'.$type];
+			}
 
 			switch ( $buttons_pos ) {
 				case 'top': 
@@ -716,14 +719,17 @@ jQuery("#ngfb-sidebar").click( function(){
 			// apply the presets to $custom_opts
 			if ( ! empty( $preset_id ) && ! empty( self::$cf['opt']['preset'] ) ) {
 				if ( array_key_exists( $preset_id, self::$cf['opt']['preset'] ) &&
-					is_array( self::$cf['opt']['preset'][$preset_id] ) )
-						$custom_opts = array_merge( $custom_opts, self::$cf['opt']['preset'][$preset_id] );
-				else $this->p->debug->log( $preset_id.' preset missing or not array'  );
+					is_array( self::$cf['opt']['preset'][$preset_id] ) ) {
+					$this->p->debug->log( 'applying preset_id '.$preset_id.' to options' );
+					$custom_opts = array_merge( $custom_opts, self::$cf['opt']['preset'][$preset_id] );
+				} else $this->p->debug->log( $preset_id.' preset_id missing or not array'  );
 			} 
 
 			$filter_name = $this->p->cf['lca'].'_sharing_html_'.$filter_id.'_options';
-			if ( ! empty( $filter_id ) && has_filter( $filter_name ) )
+			if ( ! empty( $filter_id ) && has_filter( $filter_name ) ) {
+				$this->p->debug->log( 'applying filter_id '.$filter_id.' to options ('.$filter_name.')' );
 				$custom_opts = apply_filters( $filter_name, $custom_opts );
+			}
 
 			$html = '';
 			foreach ( $ids as $id ) {
@@ -744,8 +750,9 @@ jQuery("#ngfb-sidebar").click( function(){
 			if ( empty( $ids ) ) {
 				if ( is_admin() ) {
 					if ( ( $obj = $this->p->util->get_post_object() ) === false  ||
-						$obj->post_status !== 'publish' )
-							return;
+						( get_post_status( $obj->ID ) !== 'publish' &&
+							get_post_type( $obj->ID ) !== 'attachment' ) )
+								return;
 				} elseif ( is_singular() && $this->is_post_buttons_disabled() ) {
 					$this->p->debug->log( 'exiting early: buttons disabled' );
 					return;
@@ -858,7 +865,7 @@ jQuery("#ngfb-sidebar").click( function(){
 
 			if ( ! empty( $post ) ) {
 				$post_type = $post->post_type;
-				if ( $this->p->addons['util']['postmeta']->get_options( $post->ID, 'buttons_disabled' ) ) {
+				if ( $this->p->mods['util']['postmeta']->get_options( $post->ID, 'buttons_disabled' ) ) {
 					$this->p->debug->log( 'post '.$post->ID.': sharing buttons disabled by custom meta option' );
 					$ret = true;
 				} elseif ( ! empty( $post_type ) && empty( $this->p->options['buttons_add_to_'.$post_type] ) ) {
@@ -892,7 +899,7 @@ jQuery("#ngfb-sidebar").click( function(){
 		}
 
 		public function get_sharing_media( $post_id ) {
-			$opts = $this->p->addons['util']['postmeta']->get_options( $post_id );
+			$opts = $this->p->mods['util']['postmeta']->get_options( $post_id );
 			foreach ( array(
 				'og_img_id',
 				'og_img_id_pre',
@@ -903,9 +910,11 @@ jQuery("#ngfb-sidebar").click( function(){
 					$opts[$key] = '';
 
 			if ( empty( $opts['og_img_id'] ) ) {
-				if ( $this->p->is_avail['postthumb'] == true && 
-					has_post_thumbnail( $post_id ) )
-						$opts['og_img_id'] = get_post_thumbnail_id( $post_id );
+				if ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) && 
+					wp_attachment_is_image( $post_id ) )
+						$opts['og_img_id'] = $post_id;
+				elseif ( $this->p->is_avail['postthumb'] == true && has_post_thumbnail( $post_id ) )
+					$opts['og_img_id'] = get_post_thumbnail_id( $post_id );
 				else $opts['og_img_id'] = $this->p->media->get_first_attached_image_id( $post_id );
 			} elseif ( $opts['og_img_id_pre'] === 'ngg' )
 				$opts['og_img_id'] = $opts['og_img_id_pre'].'-'.$opts['og_img_id'];

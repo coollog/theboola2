@@ -33,6 +33,7 @@ class wp_review_tab_widget extends WP_Widget {
     	
 	function form( $instance ) {
 		$instance = wp_parse_args( (array) $instance, array( 
+			'title' => '',
             'tabs' => array('toprated' => 1, 'recent' => 1, 'mostvoted' => 0, 'custom' => 0), 
             'tab_order' => array('toprated' => 1, 'recent' => 2, 'mostvoted' => 3, 'custom' => 4), 
             'tab_titles' => array('toprated' => __('Top Rated'), 'recent' => __('Recent'), 'mostvoted' => __('Most Voted'), 'custom' => __('Editor\'s choice')), 
@@ -48,6 +49,11 @@ class wp_review_tab_widget extends WP_Widget {
 		extract($instance);
 		?>
         <div class="wp_review_tab_options_form">
+        <p>
+			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:','mythemeshop' ); ?></label> 
+			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+		</p>
+
         <h4><?php _e('Select Tabs', 'wp-review'); ?></h4>
         
 		<div class="wp_review_tab_select_tabs">
@@ -99,8 +105,6 @@ class wp_review_tab_widget extends WP_Widget {
 		<p>
 			<label for="<?php echo $this->get_field_id('title_length'); ?>"><?php _e('Title length (words):', 'mts_wpt'); ?>
 				<br />
-				<!-- dummy input so that WP doesn't pick up title_length as title -->
-				<input id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="" style="display: none;" />
 				<input id="<?php echo $this->get_field_id('title_length'); ?>" name="<?php echo $this->get_field_name('title_length'); ?>" type="number" min="1" step="1" value="<?php echo $title_length; ?>" />
 			</label>
 		</p>
@@ -182,6 +186,7 @@ class wp_review_tab_widget extends WP_Widget {
 	
 	function update( $new_instance, $old_instance ) {	
 		$instance = $old_instance;    
+		$instance['title'] = strip_tags( $new_instance['title'] );
 		$instance['tabs'] = $new_instance['tabs'];          
         $instance['tab_order'] = $new_instance['tab_order'];
         $instance['tab_titles'] = wp_kses_post($new_instance['tab_titles']);
@@ -197,6 +202,7 @@ class wp_review_tab_widget extends WP_Widget {
 	function widget( $args, $instance ) {	
 		extract($args, EXTR_SKIP);     
 		extract($instance, EXTR_SKIP);    
+		$title = apply_filters( 'widget_title', $title );
 		wp_enqueue_script('wp_review-js'); 
 		wp_enqueue_style('wp_review-style');
 		wp_enqueue_script('wp_review_tab_widget'); 
@@ -219,7 +225,9 @@ class wp_review_tab_widget extends WP_Widget {
         array_multisort($tab_order, $available_tabs);
         
 		?>	
-		<?php echo $before_widget; ?>	
+		<?php echo $before_widget; 
+		if ( ! empty( $title ) ) echo $before_title . $title . $after_title; ?>
+
 		<div class="wp_review_tab_widget_content" id="<?php echo $widget_id; ?>_content">		
 			<ul class="wp-review-tabs <?php echo "has-$tabs_count-"; ?>tabs">
                 <?php foreach ($available_tabs as $tab => $label) : ?>

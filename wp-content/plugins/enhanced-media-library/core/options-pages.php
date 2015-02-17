@@ -224,13 +224,15 @@ function wpuxss_eml_print_taxonomies_options()
                                             $html .= '<div class="wpuxss-eml-settings-edit">';
                                             $html .= '<h4>' . __('Settings','eml') . '</h4>';
                                             $html .= '<ul>';
+                                            $html .= '<li><label>' . __('Taxonomy Name','eml') . '</label><input type="text" class="wpuxss-eml-taxonomy-name" name="" value="' . esc_attr($taxonomy->name) . '" disabled="disabled" /></li>';
                                             $html .= '<li><label>' . __('Hierarchical','eml') . '</label><input type="checkbox" class="wpuxss-eml-hierarchical" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][hierarchical]" value="1" ' . checked( 1, $taxonomy->hierarchical, false ) . ' /></li>';
                                             $html .= '<li><label>' . __('Column in List View','eml') . '</label><input type="checkbox" class="wpuxss-eml-show_admin_column" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][show_admin_column]" value="1" ' . checked( 1, $taxonomy->show_admin_column, false ) . ' /></li>';
                                             $html .= '<li><label>' . __('Filter in List View','eml') . '</label><input type="checkbox" class="wpuxss-eml-admin_filter" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][admin_filter]" value="1" ' . checked( 1, $wpuxss_eml_taxonomies[$taxonomy->name]['admin_filter'], false ) . ' /></li>';
                                             $html .= '<li><label>' . __('Filter in Grid View / Media Popup','eml') . '</label><input type="checkbox" class="wpuxss-eml-media_uploader_filter" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][media_uploader_filter]" value="1" ' . checked( 1, $wpuxss_eml_taxonomies[$taxonomy->name]['media_uploader_filter'], false ) . ' /></li>';
                                             $html .= '<li><label>' . __('Show in Nav Menu','eml') . '</label><input type="checkbox" class="wpuxss-eml-show_in_nav_menus" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][show_in_nav_menus]" value="1" ' . checked( 1, $taxonomy->show_in_nav_menus, false ) . ' /></li>';
                                             $html .= '<li><label>' . __('Remember terms order (sort)','eml') . '</label><input type="checkbox" class="wpuxss-eml-sort" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][sort]" value="1" ' . checked( 1, $taxonomy->sort, false ) . ' /></li>';
-                                            $html .= '<li><label>' . __('Slug','eml') . '</label><input type="text" class="wpuxss-eml-slug" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][rewrite][slug]" value="' . esc_attr($taxonomy->rewrite['slug']) . '" readonly="readonly" /></li>';
+                                            $html .= '<li><label>' . __('Rewrite Slug','eml') . '</label><input type="text" class="wpuxss-eml-slug" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][rewrite][slug]" value="' . esc_attr($taxonomy->rewrite['slug']) . '" /></li>';
+                                            $html .= '<li><label>' . __('Slug with Front','eml') . '</label><input type="checkbox" class="wpuxss-eml-rewrite-with-front" name="wpuxss_eml_taxonomies[' . $taxonomy->name . '][rewrite][with_front]" value="1" ' . checked( 1, $taxonomy->rewrite['with_front'], false ) . ' /></li>';
                                             $html .= '</ul>';
                                             $html .= '</div>';											
                                             
@@ -288,13 +290,15 @@ function wpuxss_eml_print_taxonomies_options()
                                 $html .= '<div class="wpuxss-eml-settings-edit">';
                                 $html .= '<h4>' . __('Settings','eml') . '</h4>';
                                 $html .= '<ul>';
+                                $html .= '<li><label>' . __('Taxonomy Name','eml') . '</label><input type="text" class="wpuxss-eml-taxonomy-name" name="" value="" disabled="disabled" /></li>';
                                 $html .= '<li><label>' . __('Hierarchical','eml') . '</label><input type="checkbox" class="wpuxss-eml-hierarchical" name="" value="1" checked="checked" /></li>';
                                 $html .= '<li><label>' . __('Column in Media Library','eml') . '</label><input class="wpuxss-eml-show_admin_column" type="checkbox" name="" value="1" /></li>';
                                 $html .= '<li><label>' . __('Filter in Media Library','eml') . '</label><input class="wpuxss-eml-admin_filter" type="checkbox"  name="" value="1" /></li>';
                                 $html .= '<li><label>' . __('Filter in Media Popup / Grid View','eml') . '</label><input class="wpuxss-eml-media_uploader_filter" type="checkbox" name="" value="1" /></li>';
                                 $html .= '<li><label>' . __('Show in Nav Menu','eml') . '</label><input type="checkbox" class="wpuxss-eml-show_in_nav_menus" name="" value="1" /></li>';
                                 $html .= '<li><label>' . __('Remember terms order (sort)','eml') . '</label><input type="checkbox" class="wpuxss-eml-sort" name="" value="1" /></li>';
-                                $html .= '<li><label>' . __('Slug','eml') . '</label><input type="text" class="wpuxss-eml-slug" name="" value="" /></li>';
+                                $html .= '<li><label>' . __('Rewrite Slug','eml') . '</label><input type="text" class="wpuxss-eml-slug" name="" value="" /></li>';
+                                $html .= '<li><label>' . __('Slug with Front','eml') . '</label><input type="checkbox" class="wpuxss-eml-rewrite-with-front" name="" value="1" checked="checked" /></li>';
                                 $html .= '</ul>';	
                                 $html .= '</div>';
                                     
@@ -560,10 +564,10 @@ function wpuxss_eml_print_credits()
             <p>What's new in <a href="http://wordpress.org/plugins/enhanced-media-library/changelog/">version <?php echo $wpuxss_eml_version; ?></a>.</p>
             
             <h4>Enhanced Media Library PRO</h4>
-            <p>More features under the hood <a href="http://wordpressuxsolutions.com/plugins/enhanced-media-library/">wordpressuxsolutions.com</a>.</p>
+            <p>More features under the hood <a href="http://www.wpuxsolutions.com/plugins/enhanced-media-library/">www.wpuxsolutions.com</a>.</p>
             
             <h4>Support</h4>
-            <p>Feel free to ask for help on <a href="http://wordpressuxsolutions.com/support/">wordpressuxsolutions.com</a>. Support is free for both versions of the plugin.</p>
+            <p>Feel free to ask for help on <a href="http://www.wpuxsolutions.com/support/">www.wpuxsolutions.com</a>. Support is free for both versions of the plugin.</p>
             
             <h4>Plugin rating</h4>
             <p>Please <a href="http://wordpress.org/support/view/plugin-reviews/enhanced-media-library">vote for the plugin</a>. Thanks!</p>
@@ -574,7 +578,7 @@ function wpuxss_eml_print_credits()
             </ul>
     
             <div class="author">
-                <span><a href="http://wordpressuxsolutions.com/">WordPress UX Solutions</a> by <a class="logo-webbistro" href="http://twitter.com/webbistro"><span class="icon-webbistro">@</span>webbistro</a></span>
+                <span><a href="http://www.wpuxsolutions.com/">wpUXsolutions</a> by <a class="logo-webbistro" href="http://twitter.com/webbistro"><span class="icon-webbistro">@</span>webbistro</a></span>
             </div>
     
         </div>

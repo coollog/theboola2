@@ -379,7 +379,7 @@ function wp_review_show_total($echo = true, $class = 'review-total-only', $post_
     	if ( 'percentage' == $type ) {
     		$review .= '<span class="review-total-box"><span>' . $total . '</span> <i class="percentage-icon">%</i>' . '</span>';
     	} elseif ( 'point' == $type ) {
-    		$review .= '<span class="review-total-box">' . $total . '/'.__('10','wp-review').'</span></span>';
+    		$review .= '<span class="review-total-box">' . $total . '/'.__('10','wp-review').'</span>';
     	} elseif ( 'star' == $type ) {
     	    // star
     		$review .= '<div class="review-total-star">';

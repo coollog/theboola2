@@ -48,7 +48,7 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 				case 'profile':
 					$add_metabox = empty( $this->p->options[ 'plugin_add_to_user' ] ) ? false : true;
 					if ( apply_filters( $this->p->cf['lca'].'_add_metabox_usermeta', $add_metabox, $page ) === true ) {
-						$this->p->util->add_plugin_image_sizes( $post_id );
+						$this->p->util->add_plugin_image_sizes();
 						do_action( $this->p->cf['lca'].'_admin_usermeta_header', $page );
 						$this->header_tags = $this->p->head->get_header_array( false );
 						$this->post_info = $this->p->head->get_post_info( $this->header_tags );
@@ -89,7 +89,7 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 				)
 			);
 
-			if ( empty( $this->p->is_avail['opengraph'] ) )
+			if ( empty( $this->p->is_avail['metatags'] ) )
 				unset( $tabs['tags'] );
 
 			$rows = array();
@@ -103,11 +103,11 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 			$rows = array();
 			switch ( $metabox.'-'.$key ) {
 				case 'user-preview':
-					$rows = $this->p->addons['util']['postmeta']->get_rows_social_preview( $this->form, $post_info );
+					$rows = $this->p->mods['util']['postmeta']->get_rows_social_preview( $this->form, $post_info );
 					break;
 
 				case 'user-tools':
-					$rows = $this->p->addons['util']['postmeta']->get_rows_validation_tools( $this->form, $post_info );
+					$rows = $this->p->mods['util']['postmeta']->get_rows_validation_tools( $this->form, $post_info );
 					break; 
 
 				case 'user-tags':	

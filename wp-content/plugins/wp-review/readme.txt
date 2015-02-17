@@ -3,8 +3,8 @@ Contributors: mythemeshop
 Creator's website link: http://mythemeshop.com/plugins/wp-review/
 Tags: review, wp review, rating, wp rating, user rating, google rating, star rating, product review
 Requires at least: 3.0.1
-Tested up to: 4.0
-Stable tag: 3.2.7
+Tested up to: 4.1
+Stable tag: 3.2.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,6 +88,13 @@ Please disable all plugins and check if rating is working properly. Then you can
 7. Percentage Review type
 
 == Changelog ==
+
+= 3.2.9 =
+* Fixed star rating issue on small screens.
+
+= 3.2.8 =
+* Removed extra closing span tag in markup
+* Added Title option for widget
 
 = 3.2.7 =
 * Added Title Length option for widget

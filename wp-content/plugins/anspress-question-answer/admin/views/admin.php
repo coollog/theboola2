@@ -31,6 +31,7 @@ if ( ! isset( $_REQUEST['settings-updated'] ) )
 		  <li><a href="#ap-categories" data-toggle="tab"><?php _e('Categories', 'ap'); ?></a></li>
 		  <li><a href="#ap-tags" data-toggle="tab"><?php _e('Tags', 'ap'); ?></a></li>
 		  <li><a href="#ap-user" data-toggle="tab"><?php _e('User', 'ap'); ?></a></li>
+		  <li><a href="#ap-permission" data-toggle="tab"><?php _e('Permission', 'ap'); ?></a></li>
 		  <li><a href="#ap-pages" data-toggle="tab"><?php _e('Pages', 'ap'); ?></a></li>
 		  <li><a href="#ap-permalink" data-toggle="tab"><?php _e('Permalink', 'ap'); ?></a></li>
 		  <li><a href="#ap-labels" data-toggle="tab"><?php _e('Labels', 'ap'); ?></a></li>
@@ -55,10 +56,6 @@ if ( ! isset( $_REQUEST['settings-updated'] ) )
 				<tr valign="top">
 					<th scope="row">Allow non loggedin to see question & answer form</th>
 					<td>
-						<fieldset>
-							<input type="checkbox" id="allow_anonymous" name="anspress_opt[allow_anonymous]" value="1" <?php checked( true, $settings['allow_anonymous'] ); ?> />
-							<label for="allow_anonymous"><?php _e('Allow anonymous', 'ap') ?></label>
-						</fieldset>
 						<fieldset>
 							<input type="checkbox" id="show_login_signup" name="anspress_opt[show_login_signup]" value="1" <?php checked( true, $settings['show_login_signup'] ); ?> />
 							<label for="show_login_signup">Show login and signup</label>
@@ -294,6 +291,48 @@ if ( ! isset( $_REQUEST['settings-updated'] ) )
 				</table>
 			</div>
 			
+			<div class="tab-pane" id="ap-permission">
+				<h3 class="ap-option-section"><?php _e('Permission', 'ap'); ?></h3>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row"><?php _e('Post questions', 'ap') ?></th>
+						<td>
+							<fieldset>
+								<input type="checkbox" id="allow_anonymous" name="anspress_opt[allow_anonymous]" value="1" <?php checked( true, $settings['allow_anonymous'] ); ?> />
+								<label for="allow_anonymous"><?php _e('Allow anonymous', 'ap') ?></label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row"><?php _e('Post answers', 'ap') ?></th>
+						<td>
+							<fieldset>
+								<input type="checkbox" id="only_admin_can_answer" name="anspress_opt[only_admin_can_answer]" value="1" <?php checked( true, $settings['only_admin_can_answer'] ); ?> />
+								<label for="only_admin_can_answer"><?php _e('Only admin can answer', 'ap') ?></label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row"><?php _e('Show answers', 'ap') ?></th>
+						<td>
+							<fieldset>
+								<input type="checkbox" id="logged_in_can_see_ans" name="anspress_opt[logged_in_can_see_ans]" value="1" <?php checked( true, $settings['logged_in_can_see_ans'] ); ?> />
+								<label for="logged_in_can_see_ans"><?php _e('Only logged in can see answers', 'ap') ?></label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row"><?php _e('Show comments', 'ap') ?></th>
+						<td>
+							<fieldset>
+								<input type="checkbox" id="logged_in_can_see_comment" name="anspress_opt[logged_in_can_see_comment]" value="1" <?php checked( true, $settings['logged_in_can_see_comment'] ); ?> />
+								<label for="logged_in_can_see_comment"><?php _e('Only logged in can see comment', 'ap') ?></label>
+							</fieldset>
+						</td>
+					</tr>
+				</table>
+			</div>
+				
 			<div class="tab-pane" id="ap-pages">
 				<h3 class="ap-option-section"><?php _e('Item per page', 'ap'); ?></h3>
 				<table class="form-table">

@@ -3,8 +3,8 @@ Contributors: syammohanm
 Donate link: https://wpfront.com/donate/
 Tags: user role editor, role editor, user role, role, user roles, roles, user roles editor, roles editor, role manager, roles manager, manage roles, manage role, access, capability, editor, permission, role, security, user, capability editor, capability manager, custom post types, custom post type permissions, custom post type capabilities, post type permissions, post type capabilities, menu editor, role menu, role menu editor, multisite roles, multisite role editor, multisite user roles, import roles, export roles
 Requires at least: 3.5
-Tested up to: 4.0
-Stable tag: 2.1
+Tested up to: 4.1
+Stable tag: 2.4
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -31,6 +31,12 @@ You can create, edit or delete user roles and manage role capabilities.
 * Multisite. [PRO]
 
 Compare [User Role Editor Pro](https://wpfront.com/ppro)
+
+Localization Contributors:
+<li>[Mauro Mascarenhas](http://nintersoft.ml) (Portuguese) </li>
+
+Spanish tutorial
+https://www.youtube.com/watch?v=YRZdWH-uukI
 
 == Installation ==
 
@@ -65,6 +71,26 @@ Please visit [WPFront User Role Editor FAQ](https://wpfront.com/user-role-editor
 
 == Changelog ==
 
+= 2.4 =
+* Gravity forms integration.
+* UI changes to make columns hidden on small screens.
+* Bug fix: Extended permissions not working in search results.
+* Portuguese (Brazil) language added.
+
+= 2.3 =
+* Duplicator integration.
+* Performance fix. Thanks to Jezze.
+
+= 2.2.1 =
+* Extended permissions bug fix.
+
+= 2.2 =
+* Extended permissions enhanced with [Guest].
+* User profile secondary roles added.
+* UI enhancements.
+* Menu editor bug fix. Thanks to Marcus.
+* Multisite user assignment bug fix.
+
 = 2.1 =
 * Custom post type permissions.
 * Bug fixes.
@@ -93,6 +119,21 @@ Please visit [WPFront User Role Editor FAQ](https://wpfront.com/user-role-editor
 * Initial release.
 
 == Upgrade Notice ==
+
+= 2.4 =
+* Gravity forms integration.
+* UI enhancements.
+* Bug fixes.
+
+= 2.3 =
+* Integrates with Duplicator plugin.
+* Performance fix on list roles.
+
+= 2.2.1 =
+* Bug fixes.
+
+= 2.2 = 
+* Various bug fixes and enhancements.
 
 = 2.1 =
 * Manage custom post type permissions.

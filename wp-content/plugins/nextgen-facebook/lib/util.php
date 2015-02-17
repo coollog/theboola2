@@ -24,7 +24,11 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 		}
 
 		protected function add_actions() {
-			add_action( 'wp', array( &$this, 'add_plugin_image_sizes' ), 10, 0 );
+			// add default image sizes from plugin settings
+			// add_plugin_image_sizes() is also called from NgfbPostmeta::set_header_tags() to set image sizes for the post id
+			add_action( 'wp', array( &$this, 'add_plugin_image_sizes' ), -100 );	// runs everytime a posts query is triggered from an url
+			add_action( 'admin_init', array( &$this, 'add_plugin_image_sizes' ), -100 );
+
 			add_action( 'wp_scheduled_delete', array( &$this, 'delete_expired_transients' ) );
 			add_action( 'wp_scheduled_delete', array( &$this, 'delete_expired_file_cache' ) );
 		}
@@ -40,51 +44,88 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 			}
 		}
 
-		public function get_image_size_label( $size_name ) {
+		public function get_image_size_label( $size_name ) {	// ngfb-opengraph
 			if ( ! empty( $this->size_labels[$size_name] ) )
 				return $this->size_labels[$size_name];
 			else return $size_name;
 		}
 
-		public function add_plugin_image_sizes( $post_id = false ) {
-			$sizes = apply_filters( $this->p->cf['lca'].'_plugin_image_sizes', array() );
+		// called directly (with or without a post ID), or from the 'wp' action ($post_id will be an object)
+		public function add_plugin_image_sizes( $post_id = false, $sizes = array(), $filter = true ) {
+			/*
+			 * allow various plugin extensions to provide their image names, labels, etc.
+			 * the first dimension array key is the option name prefix by default
+			 * you can also include the width, height, crop, crop_x, and crop_y values
+			 *
+			 *	Array (
+			 *		[rp_img] => Array (
+			 *			[name] => richpin
+			 *			[label] => Rich Pin Image Dimensions
+			 *		) 
+			 *		[og_img] => Array (
+			 *			[name] => opengraph
+			 *			[label] => Open Graph Image Dimensions
+			 *		)
+			 *	)
+			 */
+			if ( $filter === true )
+				$sizes = apply_filters( $this->p->cf['lca'].'_plugin_image_sizes', $sizes, $post_id );
+			$def_opts = $this->p->opt->get_defaults();
 			$meta_opts = array();
 
 			// allow custom post meta to override the image size options
-			if ( isset( $this->p->addons['util']['postmeta'] ) ) {
+			// get the post meta if we can determine a post_id
+			if ( isset( $this->p->mods['util']['postmeta'] ) ) {
+				// $post_id may be false, or an object
 				if ( ! is_numeric( $post_id ) && is_singular() ) {
 					$obj = $this->get_post_object();
 					$post_id = empty( $obj->ID ) || 
 						empty( $obj->post_type ) ? 0 : $obj->ID;
 				}
-				if ( ! empty( $post_id ) )
-					$meta_opts = $this->p->addons['util']['postmeta']->get_options( $post_id );
+				// on non-singular pages, $post_id may be an object here
+				if ( is_numeric( $post_id ) && $post_id > 0 ) {
+					$this->p->debug->log( 'reading custom meta for post id '.$post_id );
+					$meta_opts = $this->p->mods['util']['postmeta']->get_options( $post_id );
+				} 
 			}
 
-			foreach( $sizes as $opt_prefix => $attr ) {
+			foreach( $sizes as $opt_prefix => $size_info ) {
+				if ( ! is_array( $size_info ) ) {
+					$save_name = empty( $size_info ) ? $opt_prefix : $size_info;
+					$size_info = array( 'name' => $save_name, 'label' => $save_name );
+				} elseif ( ! empty( $size_info['prefix'] ) )					// allow for alternate option prefix
+					$opt_prefix = $size_info['prefix'];
 
-				// check for custom meta sizes first
-				if ( ! empty( $meta_opts[$opt_prefix.'_width'] ) && $meta_opts[$opt_prefix.'_width'] > 0 && 
-					! empty( $meta_opts[$opt_prefix.'_height'] ) && $meta_opts[$opt_prefix.'_height'] > 0 ) {
-					$width = $meta_opts[$opt_prefix.'_width'];
-					$height = $meta_opts[$opt_prefix.'_height'];
-					$crop = empty( $meta_opts[$opt_prefix.'_crop'] ) ? false : true;
-					$this->p->debug->log( 'found custom meta '.$opt_prefix.' size ('.$width.'x'.$height.( $crop === true ? ' cropped' : '' ).')' );
-				} else {
-					$width = empty( $this->p->options[$opt_prefix.'_width'] ) ? 0 : $this->p->options[$opt_prefix.'_width'];
-					$height = empty( $this->p->options[$opt_prefix.'_height'] ) ? 0 : $this->p->options[$opt_prefix.'_height'];
-					$crop = empty( $this->p->options[$opt_prefix.'_crop'] ) ? false : true;
+				foreach ( array( 'width', 'height', 'crop', 'crop_x', 'crop_y' ) as $key ) {
+					if ( isset( $size_info[$key] ) )					// prefer existing info from filters
+						continue;
+					elseif ( isset( $meta_opts[$opt_prefix.'_'.$key] ) )			// use post meta if available
+						$size_info[$key] = $meta_opts[$opt_prefix.'_'.$key];
+					elseif ( isset( $this->p->options[$opt_prefix.'_'.$key] ) )		// current plugin settings
+						$size_info[$key] = $this->p->options[$opt_prefix.'_'.$key];
+					else $size_info[$key] = $def_opts[$opt_prefix.'_'.$key];		// default settings value
+
+					if ( $key === 'crop' )							// make sure crop is true or false
+						$size_info[$key] = empty( $size_info[$key] ) ? false : true;
 				}
+				if ( $size_info['width'] > 0 && $size_info['height'] > 0 ) {
+					// preserve compatibility with older wordpress versions, use true or false when possible
+					if ( $size_info['crop'] === true && ( $size_info['crop_x'] !== 'center' || $size_info['crop_y'] !== 'center' ) ) {
+						global $wp_version;
+						if ( ! version_compare( $wp_version, 3.9, '<' ) )
+							$size_info['crop'] = array( $size_info['crop_x'], $size_info['crop_y'] );
+					}
+					// allow custom function hooks to make changes
+					if ( $filter === true )
+						$size_info = apply_filters( $this->p->cf['lca'].'_size_info_'.$size_info['name'], $size_info, $post_id );
 
-				if ( $width > 0 && $height > 0 ) {
-					if ( is_array( $attr ) ) {
-						$name = empty( $attr['name'] ) ? $opt_prefix : $attr['name'];
-						$label = empty( $attr['label'] ) ? $opt_prefix : $attr['label'];
-					} else $name = $label = $attr;
-					$this->size_labels[$this->p->cf['lca'].'-'.$name] = $label;	// setup reference array for image size labels
-					$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$name.
-						' ('.$width.'x'.$height.( $crop === true ? ' cropped' : '' ).') added' );
-					add_image_size( $this->p->cf['lca'].'-'.$name, $width, $height, $crop );
+					// a reference array for image size labels, used in image size error messages
+					$this->size_labels[$this->p->cf['lca'].'-'.$size_info['name']] = $size_info['label'];
+
+					add_image_size( $this->p->cf['lca'].'-'.$size_info['name'], $size_info['width'], $size_info['height'], $size_info['crop'] );
+
+					$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$size_info['name'].' '.$size_info['width'].'x'.$size_info['height'].
+						( empty( $size_info['crop'] ) ? '' : ' crop '.$size_info['crop_x'].'/'.$size_info['crop_y'] ).' added' );
 				}
 			}
 		}
@@ -96,8 +137,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 					! empty( $this->p->options[$opt_prefix.'_height'] ) ) {
 
 					$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$size_suffix.
-						' ('.$this->p->options[$opt_prefix.'_width'].'x'.$this->p->options[$opt_prefix.'_height'].
-						( empty( $this->p->options[$opt_prefix.'_crop'] ) ? '' : ' cropped' ).') added', 2 );
+						' '.$this->p->options[$opt_prefix.'_width'].'x'.$this->p->options[$opt_prefix.'_height'].
+						( empty( $this->p->options[$opt_prefix.'_crop'] ) ? '' : ' cropped' ).' added', 2 );
 
 					add_image_size( $this->p->cf['lca'].'-'.$size_suffix, 
 						$this->p->options[$opt_prefix.'_width'], 
@@ -120,53 +161,64 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 		}
 
 		public function get_post_types( $type = 'frontend', $output = 'objects' ) {
-			$include = false;
 			switch ( $type ) {
 				case 'frontend':
-					$include = array( 'public' => true );
+					$post_types = get_post_types( array( 'public' => true ), $output );
 					break;
 				case 'backend':
-					$include = array( 'public' => true, 'show_ui' => true );
+					$post_types = get_post_types( array( 'public' => true, 'show_ui' => true ), $output );
+					break;
+				default:
+					$post_types = array();
 					break;
 			}
-			$post_types = $include !== false ? get_post_types( $include, $output ) : array();
 			return apply_filters( $this->p->cf['lca'].'_post_types', $post_types, $type, $output );
 		}
 
 		public function flush_post_cache( $post_id ) {
 			switch ( get_post_status( $post_id ) ) {
-			case 'draft':
-			case 'pending':
-			case 'future':
-			case 'private':
-			case 'publish':
-				$lang = SucomUtil::get_locale();
-				$cache_type = 'object cache';
-				$sharing_url = $this->p->util->get_sharing_url( $post_id );
+				case 'draft':
+				case 'pending':
+				case 'future':
+				case 'private':
+				case 'publish':
+					$lang = SucomUtil::get_locale();
+					$cache_type = 'object cache';
+					$sharing_url = $this->p->util->get_sharing_url( $post_id );
+					$permalink_no_meta = add_query_arg( array( 'NGFB_META_TAGS_DISABLE' => 1 ), get_permalink( $post_id ) );
+	
+					$transients = array(
+						'SucomCache::get' => array(
+							'url:'.$permalink_no_meta,
+						),
+						'NgfbHead::get_header_array' => array( 
+							'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url,
+							'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url.'_crawler:pinterest',
+						),
+					);
+					$transients = apply_filters( $this->p->cf['lca'].'_post_cache_transients', $transients, $post_id, $lang, $sharing_url );
+	
+					$objects = array(
+						'SucomWebpage::get_content' => array(
+							'lang:'.$lang.'_post:'.$post_id.'_filtered',
+							'lang:'.$lang.'_post:'.$post_id.'_unfiltered',
+						),
+						'SucomWebpage::get_hashtags' => array(
+							'lang:'.$lang.'_post:'.$post_id,
+						),
+					);
+					$objects = apply_filters( $this->p->cf['lca'].'_post_cache_objects', $objects, $post_id, $lang, $sharing_url );
+	
+					$deleted = $this->flush_cache_objects( $transients, $objects );
+					if ( ! empty( $this->p->options['plugin_cache_info'] ) && $deleted > 0 )
+						$this->p->notice->inf( $deleted.' items removed from the WordPress object and transient caches.', true );
 
-				$transients = array(
-					'NgfbHead::get_header_array' => array( 
-						'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url,
-						'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url.'_crawler:pinterest',
-					),
-				);
-				$transients = apply_filters( $this->p->cf['lca'].'_post_cache_transients', $transients, $post_id, $lang, $sharing_url );
+					if ( function_exists( 'w3tc_pgcache_flush_post' ) )	// w3 total cache
+						w3tc_pgcache_flush_post( $post_id );
+					elseif ( function_exists( 'wp_cache_post_change' ) )	// wp super cache
+						wp_cache_post_change( $post_id );
 
-				$objects = array(
-					'SucomWebpage::get_content' => array(
-						'lang:'.$lang.'_post:'.$post_id.'_filtered',
-						'lang:'.$lang.'_post:'.$post_id.'_unfiltered',
-					),
-					'SucomWebpage::get_hashtags' => array(
-						'lang:'.$lang.'_post:'.$post_id,
-					),
-				);
-				$objects = apply_filters( $this->p->cf['lca'].'_post_cache_objects', $objects, $post_id, $lang, $sharing_url );
-
-				$deleted = $this->flush_cache_objects( $transients, $objects );
-				if ( ! empty( $this->p->options['plugin_cache_info'] ) )
-					$this->p->notice->inf( $deleted.' items removed from the WordPress object and transient caches.', true );
-				break;
+					break;
 			}
 		}
 
@@ -317,6 +369,32 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 					break;
 			}
 			return $val;
+		}
+
+		// query examples:
+		//	/html/head/link|/html/head/meta
+		//	/html/head/meta[starts-with(@property, 'og:video:')]
+		public function get_head_meta( $url, $query = '/html/head/meta', $include_self = true ) {
+			if ( empty( $query ) )
+				return false;
+			if ( ( $html = $this->p->cache->get( $url, 'raw', 'transient' ) ) === false )
+				return false;
+			if ( $include_self !== true &&
+				strpos( $html, '<!-- '.$this->p->cf['lca'].' meta tags begin -->' ) !== false )
+					$html = preg_replace( '/<!-- '.$this->p->cf['lca'].' meta tags begin -->.*<!-- '.
+						$this->p->cf['lca'].' meta tags end -->/ms', '', $html );
+			$doc = new DomDocument();		// since PHP v4.1.0
+			@$doc->loadHTML( $html );		// suppress parsing errors
+			$xpath = new DOMXPath( $doc );
+			$metas = $xpath->query( $query );
+			$ret = array();
+			foreach ( $metas as $m ) {
+				$attrs = array();		// put all attributes in a single array
+				foreach ( $m->attributes as $a )
+					$attrs[$a->name] = $a->value;
+				$ret[$m->tagName][] = $attrs;
+			}
+			return $ret;
 		}
 	}
 }

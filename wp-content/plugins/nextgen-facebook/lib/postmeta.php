@@ -12,8 +12,7 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 
 	/*
 	 * This class is extended by gpl/util/postmeta.php or pro/util/postmeta.php
-	 * and the class object is created as $this->p->addons['util']['postmeta'] by
-	 * gpl/addons.php or pro/addons.php.
+	 * and the class object is created as $this->p->mods['util']['postmeta']
 	 *
 	 */
 	class NgfbPostmeta {
@@ -29,7 +28,8 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 				add_action( 'admin_head', array( &$this, 'set_header_tags' ) );
 				add_action( 'add_meta_boxes', array( &$this, 'add_metaboxes' ) );
 				add_action( 'save_post', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY );
-				add_action( 'save_post', array( &$this, 'flush_cache' ), 100 );	// save_post action runs after status change
+				add_action( 'save_post', array( &$this, 'flush_cache' ), 100 );
+				add_action( 'save_post', array( &$this, 'check_head' ), 1000 );
 				add_action( 'edit_attachment', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY );
 				add_action( 'edit_attachment', array( &$this, 'flush_cache' ), 100 );
 			}
@@ -52,6 +52,10 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 			if ( ( $obj = $this->p->util->get_post_object() ) === false ||
 				empty( $obj->post_type ) )
 					return;
+			$screen = get_current_screen();
+			$page = $screen->id;
+			if ( strpos( $page, 'edit-' ) !== false )	// check for post/page edititing lists
+				return;
 			$post_id = empty( $obj->ID ) ? 0 : $obj->ID;
 			if ( isset( $obj->post_status ) && $obj->post_status !== 'auto-draft' ) {
 				$post_type = get_post_type_object( $obj->post_type );
@@ -62,7 +66,6 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 					$this->header_tags = $this->p->head->get_header_array( $post_id );
 					$this->post_info = $this->p->head->get_post_info( $this->header_tags );
 				}
-				$this->p->debug->show_html( null, 'debug log' );
 			}
 		}
 
@@ -87,7 +90,7 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 				)
 			);
 
-			if ( empty( $this->p->is_avail['opengraph'] ) )
+			if ( empty( $this->p->is_avail['metatags'] ) )
 				unset( $tabs['tags'] );
 
 			$rows = array();
@@ -123,7 +126,9 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 					break; 
 
 				case 'meta-tools':
-					if ( get_post_status( $post_info['id'] ) === 'publish' ) {
+					if ( get_post_status( $post_info['id'] ) === 'publish' ||
+						get_post_type( $post_info['id'] ) === 'attachment' ) {
+
 						$rows = $this->get_rows_validation_tools( $this->form, $post_info );
 					} else $rows[] = '<td><p class="centered">The Validation Tools will be available when the '
 						.$post_info['ptn'].' is published with public visibility.</p></td>';
@@ -134,30 +139,52 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 
 		public function get_rows_social_preview( &$form, &$post_info ) {
 			$rows = array();
-			$size_name = $this->p->cf['lca'].'-preview';
-			$size_info = $this->p->media->get_size_info( $size_name );
-			$title = empty( $post_info['og:title'] ) ? 'No Title' : $post_info['og:title'];
-			$desc = empty( $post_info['og:description'] ) ? 'No Description' : $post_info['og:description'];
-			$by = $_SERVER['SERVER_NAME'];
-			$by .= empty( $post_info['author'] ) ? '' : ' | By '.$post_info['author'];
+			$max_width = 600;
+			$max_height = 315;
+			$og_image = $post_info['og_image'];
+			$div_style = 'width:'.$max_width.'px; height:'.$max_height.'px;';
+			$have_sizes = ( ! empty( $og_image['og:image:width'] ) && 
+				! empty( $og_image['og:image:height'] ) ) ? true : false;
+			$is_sufficient = ( $have_sizes === true && 
+				$og_image['og:image:width'] >= $max_width && 
+				$og_image['og:image:height'] >= $max_height ) ? true : false;
+			$msgs = array(
+				'not_found' => '<p>No Open Graph Image Found</p>',
+				'too_small' => '<p>Image Dimensions Smaller<br/>than Suggested Minimum<br/>of '.$max_width.' x '.$max_height.'px</p>',
+				'no_size' => '<p>Image Dimensions Unknown<br/>or Not Available</p>',
+			);
+
+			foreach ( array( 'og:image:secure_url', 'og:image' ) as $key ) {
+				if ( ! empty( $og_image[$key] ) ) {
+					if ( $have_sizes === true ) {
+						$image_preview_html = '<div class="preview_img" style="'.$div_style.' 
+						background-size:'.( $is_sufficient === true ? 'cover' : $og_image['og:image:width'].' '.$og_image['og:image:height'] ).'; 
+						background-image:url('.$og_image[$key].');" />'.( $is_sufficient === true ? '' : $msgs['too_small'] ).'</div>';
+					} else {
+						$image_preview_html = '<div class="preview_img" style="'.$div_style.' 
+						background-image:url('.$og_image[$key].');" />'.$msgs['no_size'].'</div>';
+					}
+					break;	// stop after first image
+				}
+			}
+
+			if ( empty( $image_preview_html ) )
+				$image_preview_html = '<div class="preview_img" style="'.$div_style.'">'.$msgs['not_found'].'</div>';
 
 			$rows[] = $this->p->util->th( 'Open Graph Social Preview Example', 'medium', 'postmeta-social-preview' ).
 			'<td style="background-color:#e9eaed;">
-			<div class="preview_box" style="width:'.($size_info['width']+40).'px;">
-			<div class="preview_box" style="width:'.$size_info['width'].'px;">'.
-			$this->p->media->get_image_preview_html( $post_info['og_image'], $size_name, $size_info, array(
-				'not_found' => '<p>No Open Graph Image Found</p>',
-				'too_small' => '<p>Image Dimensions Smaller<br/>than Suggested Minimum<br/>of '.$size_info['width'].' x '.$size_info['height'].'px</p>',
-				'no_size' => '<p>Image Dimensions Unknown<br/>or Not Available</p>',
-			) ).
-			'<div class="preview_txt">
-			<div class="preview_title">'.$title.'</div>
-			<div class="preview_desc">'.$desc.'</div>
-			<div class="preview_by">'.$by.'</div>
-			</div></div></div></td>';
-
+			<div class="preview_box" style="width:'.( $max_width + 40 ).'px;">
+				<div class="preview_box" style="width:'.$max_width.'px;">
+					'.$image_preview_html.'
+					<div class="preview_txt">
+						<div class="preview_title">'.( empty( $post_info['og:title'] ) ? 'No Title' : $post_info['og:title'] ).'</div>
+						<div class="preview_desc">'.( empty( $post_info['og:description'] ) ? 'No Description' : $post_info['og:description'] ).'</div>
+						<div class="preview_by">'.( $_SERVER['SERVER_NAME'].( empty( $post_info['author'] ) ? '' : ' | By '.$post_info['author'] ) ).'</div>
+					</div>
+				</div>
+			</div></td>';
+	
 			return $rows;
-
 		}
 
 		public function get_rows_validation_tools( &$form, &$post_info ) {
@@ -190,7 +217,7 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 			accept query arguments &ndash; copy-paste the following sharing URL into the validation input field. 
 			To enable the display of Twitter Card information in tweets, you must submit a URL for each type of card you provide
 			(Summary, Summary with Large Image, Photo, Gallery, Player, and/or Product card).</p>'.
-			'<p>'.$form->get_text( $this->p->util->get_sharing_url( $post_info['id'] ), 'wide' ).'</p></td>
+			'<p>'.$form->get_input_for_copy( $this->p->util->get_sharing_url( $post_info['id'] ), 'wide' ).'</p></td>
 
 			<td class="validate">'.$form->get_button( 'Validate Twitter Card', 'button-secondary', null, 
 			'https://dev.twitter.com/docs/cards/validation/validator', true ).'</td>';
@@ -199,36 +226,81 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 		}
 
 		public function get_og_video( $num = 0, $post_id, $check_dupes = true, $meta_pre = 'og' ) {
-			$this->p->debug->log( __METHOD__.' not implemented in GPL version' );
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 			return array();
 		}
 
-		public function get_og_image( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $meta_pre = 'og' ) {
-			$this->p->debug->log( __METHOD__.' not implemented in GPL version' );
+		public function get_og_image( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $force_regen = false, $meta_pre = 'og' ) {
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 			return array();
+		}
+
+                public function reset_options( $post_id ) {
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 		}
 
                 public function get_options( $post_id, $idx = false, $attr = array() ) {
-			$this->p->debug->log( __METHOD__.' not implemented in GPL version' );
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 			if ( $idx !== false )
 				return false;
 			else return array();
 		}
 
 		public function get_defaults( $idx = false ) {
-			$this->p->debug->log( __METHOD__.' not implemented in GPL version' );
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 			if ( $idx !== false )
 				return false;
 			else return array();
 		}
 
 		public function save_options( $post_id ) {
-			$this->p->debug->log( __METHOD__.' not implemented in GPL version' );
+			$this->p->debug->log( __METHOD__.' not implemented in free version' );
 			return $post_id;
 		}
 
 		public function flush_cache( $post_id ) {
 			$this->p->util->flush_post_cache( $post_id );
+			return $post_id;
+		}
+
+		public function check_head( $post_id ) {
+			if ( empty( $this->p->options['plugin_check_head'] ) )
+				return $post_id;
+
+			if ( ( $obj = $this->p->util->get_post_object( $post_id ) ) === false )
+				return $post_id;
+
+			// only check registered front-end post types (to avoid menu items, product variations, etc.)
+			$post_types = $this->p->util->get_post_types( 'frontend', 'names' );
+			if ( empty( $obj->post_type ) || 
+				! in_array( $obj->post_type, $post_types ) )
+					return $post_id;
+
+			// only check published posts
+			if ( ! isset( $obj->post_status ) || 
+				$obj->post_status !== 'publish' )
+					return $post_id;
+
+			$permalink_no_meta = add_query_arg( array( 'NGFB_META_TAGS_DISABLE' => 1 ), get_permalink( $post_id ) );
+			if ( ( $metas = $this->p->util->get_head_meta( $permalink_no_meta, '/html/head/link|/html/head/meta', false ) ) !== false ) {
+				foreach( array(
+					'link' => array( 'rel' ),
+					'meta' => array( 'name', 'itemprop', 'property' ),
+				) as $tag => $types ) {
+					if ( isset( $metas[$tag] ) ) {
+						foreach( $metas[$tag] as $m ) {
+							foreach( $types as $t ) {
+								if ( isset( $m[$t] ) && $m[$t] !== 'generator' && 
+									! empty( $this->p->options['add_'.$tag.'_'.$t.'_'.$m[$t]] ) ) {
+									$this->p->notice->err( 'Possible conflict detected - 
+									Your theme or another plugin is adding a <code>'.$tag.' '.$t.'="'.$m[$t].'"</code>
+									HTML tag to the head section of this webpage.', true );
+								}
+							}
+						}
+					}
+				}
+			}
 			return $post_id;
 		}
 

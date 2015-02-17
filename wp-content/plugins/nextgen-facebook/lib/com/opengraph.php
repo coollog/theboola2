@@ -18,21 +18,6 @@ if ( ! class_exists( 'SucomOpengraph' ) ) {
 			$this->p =& $plugin;
 			$this->p->debug->mark();
 		}
-	
-		public function parse( $html ) {
-			$doc = new DomDocument();		// since PHP v4.1.0
-			$ret = @$doc->loadHTML( $html );	// suppress parsing errors
-			$xpath = new DOMXPath( $doc );
-			$query = '//*/meta[starts-with(@property, \'og:\')]';
-			$metas = $xpath->query( $query );
-			$rmetas = array();
-			foreach ( $metas as $meta ) {
-				$property = $meta->getAttribute('property');
-				$content = $meta->getAttribute('content');
-				$rmetas[$property] = $content;
-			}
-			return $rmetas;
-		}
 	}
 }
 

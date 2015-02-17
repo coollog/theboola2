@@ -4,15 +4,20 @@ Plugin Name: WP Shortcode by MyThemeShop
 Plugin URI: http://mythemeshop.com/
 Description: With the vast array of shortcodes, you can quickly and easily build content for your posts and pages and turbocharge your blogging experience.
 Author: MyThemeShop
-Version: 1.2
+Version: 1.3
 Author URI: http://mythemeshop.com/
 */
 
 function mts_wpshortcodes_scripts() {
             
+    wp_register_style('tipsy', plugins_url('css/tipsy.css', __FILE__));
+    wp_enqueue_style( 'tipsy' );
+
     wp_register_style('mts_wpshortcodes', plugins_url('css/wp-shortcode.css', __FILE__));
     wp_enqueue_style('mts_wpshortcodes');
     
+    wp_register_script('tipsy', plugins_url('js/jquery.tipsy.js', __FILE__), array('jquery'));
+    wp_enqueue_script( 'tipsy' );
     wp_register_script('mts_wpshortcodes', plugins_url('js/wp-shortcode.js', __FILE__), array('jquery'));
     wp_enqueue_script('mts_wpshortcodes');
 }
@@ -76,6 +81,7 @@ function mts_wpshortcodes_add() {
     remove_shortcode('divider'); add_shortcode('divider', 'mts_divider');
     remove_shortcode('divider_top'); add_shortcode('divider_top', 'mts_divider_top');
     remove_shortcode('clear'); add_shortcode('clear', 'mts_clear');
+    add_shortcode('tooltip', 'mts_tooltip');
 }
 
 
@@ -297,9 +303,9 @@ function mts_youtube_video( $atts, $content = null ) {
         'id' => '',  
         'width' => '600',  
         'height' => '340',
-		'position'   => 'left'
+		    'position'   => 'left'
     ), $atts));  
-    $out = "<div class=\"youtube-video " .$position . "\"><iframe width=\"" .$width . "\" height=\"" .$height ."\" src=\"http://www.youtube.com/embed/" . $id . "?rel=0\" frameborder=\"0\" allowfullscreen></iframe></div>";
+    $out = "<div class=\"youtube-video " .$position . "\"><iframe width=\"" .$width . "\" height=\"" .$height ."\" src=\"//www.youtube.com/embed/" . $id . "?rel=0\" frameborder=\"0\" allowfullscreen></iframe></div>";
 	return $out;
 }  
 
@@ -310,7 +316,7 @@ function mts_vimeo_video( $atts, $content = null ) {
         'height' => '340',
 		'position'   => 'left'
     ), $atts));  
-    $out = "<div class=\"vimeo-video " .$position . "\"><iframe width=\"" .$width . "\" height=\"" .$height ."\" src=\"http://player.vimeo.com/video/" . $id . "?title=0&amp;byline=0&amp;portrait=0\" frameborder=\"0\" allowfullscreen></iframe></div>";
+    $out = "<div class=\"vimeo-video " .$position . "\"><iframe width=\"" .$width . "\" height=\"" .$height ."\" src=\"//player.vimeo.com/video/" . $id . "?title=0&amp;byline=0&amp;portrait=0\" frameborder=\"0\" allowfullscreen></iframe></div>";
 	return $out;
 }  
 
@@ -362,6 +368,11 @@ function mts_tabs( $atts, $content = null ) {
 	}
     
 }
+add_filter( 'no_texturize_shortcodes', 'no_texturize_tabs' );
+function no_texturize_tabs($shortcodes){
+    $shortcodes[] = 'tabs';
+    return $shortcodes;
+}
 
 /*--------------------------------------------------------
     Toggles
@@ -393,4 +404,17 @@ function mts_clear( $atts ) {
     return '<div class="clear"></div>';
 }
 
+
+/*-----------------------------------------------------------------------------------*/
+/*  Tooltip 
+/*-----------------------------------------------------------------------------------*/
+
+function mts_tooltip( $atts, $content ) {
+    $atts = shortcode_atts(array(
+      'content' => '',
+      'direction' => 'n',
+      'fade' => '0'
+    ), $atts);
+    return '<span class="wp_shortcodes_tooltip" title="'.esc_attr( $atts['content'] ).'" data-gravity="'.esc_attr( $atts['direction'] ).'" data-fade="'.esc_attr( $atts['fade'] ).'">'.$content.'</span>';
+}
 ?>

@@ -35,6 +35,9 @@ if ( ! class_exists( 'NgfbGplAdminAdvanced' ) ) {
 				$rows[] = $this->p->util->th( 'Report Cache Purge Count', null, 'plugin_cache_info' ).
 				'<td class="blank">'.$form->get_no_checkbox( 'plugin_cache_info' ).'</td>';
 
+				$rows[] = $this->p->util->th( 'Check for Header Tag Conflicts', null, 'plugin_check_head' ).
+				'<td class="blank">'.$form->get_no_checkbox( 'plugin_check_head' ).'</td>';
+
 				$rows[] = $this->p->util->th( 'Use WP Locale for Language', null, 'plugin_filter_lang' ).
 				'<td class="blank">'.$form->get_no_checkbox( 'plugin_filter_lang' ).'</td>';
 
@@ -59,7 +62,7 @@ if ( ! class_exists( 'NgfbGplAdminAdvanced' ) ) {
 			$rows[] = '<td colspan="2" align="center">'.$this->p->msgs->get( 'pro-feature-msg' ).'</td>';
 
 			if ( $this->p->options['plugin_display'] == 'all' ) {
-				$rows[] =  $this->p->util->th( 'Ignore Small Images in Content', null, 'plugin_ignore_small_img' ).
+				$rows[] =  $this->p->util->th( 'Ignore Thumbnails in Content', null, 'plugin_ignore_small_img' ).
 				'<td class="blank">'.$form->get_no_checkbox( 'plugin_ignore_small_img' ).'</td>';
 			}
 
@@ -131,7 +134,8 @@ if ( ! class_exists( 'NgfbGplAdminAdvanced' ) ) {
 			$og_cols = 2;
 			$cells = array();
 			foreach ( $this->p->opt->get_defaults() as $opt => $val ) {
-				if ( preg_match( '/^add_('.$tag.')_([^_]+)_(.+)$/', $opt, $match ) ) {
+				if ( preg_match( '/^add_('.$tag.')_([^_]+)_(.+)$/', $opt, $match ) && 
+					$opt !== 'add_meta_name_generator' ) {
 					$highlight = $opt === 'add_meta_name_description' ? ' highlight' : '';
 					$cells[] = '<!-- '.( implode( ' ', $match ) ).' -->'.
 						'<td class="checkbox blank">'.$form->get_no_checkbox( $opt ).'</td>'.

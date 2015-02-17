@@ -5,8 +5,8 @@ Tags: nextgen gallery, featured, attached, open graph, meta tags, buttons, like,
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.txt
 Requires At Least: 3.0
-Tested Up To: 4.0
-Stable Tag: 7.7.0.2
+Tested Up To: 4.1
+Stable Tag: 7.7.5.6
 
 Display your content in the best possible way on Facebook, Google+, Twitter, Pinterest, etc. - no matter how your webpage is shared!
 
@@ -16,11 +16,11 @@ Display your content in the best possible way on Facebook, Google+, Twitter, Pin
 <p><img src="https://ps.w.org/nextgen-facebook/assets/icon-256x256.png?rev=" width="256" height="256" style="max-width:none;margin-right:40px;" /></p>
 </td><td valign="top">
 
-<p><strong>Make sure social websites present your content in the best possible way, no matter <em>how</em> your webpage is shared</strong> &mdash; from sharing buttons on the webpage, browser add-ons and extensions, or URLs pasted directly on social websites.</p>
+<p><strong>Make sure social websites present your content in the best possible way, no matter <em>how</em> your webpage is shared</strong> &mdash; from sharing buttons on the webpage, browser add-ons and extensions, or <em>URLs pasted directly in social timeline posts and private messages</em>.</p>
 
 <p>NextGEN Facebook (NGFB) <strong>gives you total control over the information social websites need</strong>, improving Google Search ranking, social engagement, and click-through-rates on Facebook, Google+, Twitter, Pinterest, LinkedIn, StumbleUpon, Tumblr and and many more &mdash; along with offering many of the most popular social sharing buttons!</p>
 
-<p>You can download the <a href="https://wordpress.org/plugins/nextgen-facebook/">Free version of NGFB on WordPress.org</a> and <a href="http://surniaulula.com/extend/plugins/nextgen-facebook/">purchase Pro license(s) on SurniaUlula.com</a> (includes a <em>No Risk 30 Day Refund Policy</em>).</p>
+<p>You can download the <a href="https://wordpress.org/plugins/nextgen-facebook/">Free version of NGFB on wordpress.org</a> and <a href="http://surniaulula.com/extend/plugins/nextgen-facebook/">purchase Pro license(s) on surniaulula.com</a> (includes a <em>No Risk 30 Day Refund Policy</em>).</p>
 
 </td></tr></table>
 
@@ -34,7 +34,6 @@ Display your content in the best possible way on Facebook, Google+, Twitter, Pin
 * Supports featured, attached, gallery shortcode, and/or HTML image tags in content.
 * Validates image dimensions to provide accurate media for social websites.
 * Auto-regeneration of inaccurate / missing WordPress image sizes.
-* Support for embedded videos (iframe and object HTML tags).
 * Fully renders content (including shortcodes) for accurate description texts.
 * Configurable title separator character (hyphen by default).
 * Support of WordPress and/or SEO titles for Posts and Pages.
@@ -62,7 +61,16 @@ Display your content in the best possible way on Facebook, Google+, Twitter, Pin
 	* Twitter
 
 <blockquote>
-<p><strong>Don't need the sharing buttons?</strong> Have a look at the <a href="https://wordpress.org/plugins/wpsso/">WordPress Social Sharing Optimization</a> (WPSSO) plugin &mdash; a fork (aka child) of NextGEN Facebook (NGFB). They have the same author, many of the same excellent features, but <em>WPSSO is distributed without the sharing buttons and their related features</em> (shortcodes, widgets, stylesheets, javascript caching, and url shortening). As a result, WPSSO is 25% smaller and is often preferred for websites that already have (or don't need) a set of sharing buttons.</p>
+<p><strong>Don't need the sharing buttons?</strong></p>
+
+<p>Have a look at the <a href="https://wordpress.org/plugins/wpsso/">WordPress Social Sharing Optimization</a> (WPSSO) plugin &mdash; a fork (aka child) of NextGEN Facebook (NGFB). They have the same author, many of the same excellent features, but <em>WPSSO is distributed without the sharing buttons and their related features</em> (shortcodes, widgets, stylesheets, javascript caching, and url shortening). As a result, WPSSO is 25% smaller and is often preferred for websites that already have (or don't need) a set of sharing buttons.</p>
+
+<p>Additional extension plugins are also available for WPSSO, including:
+<ul>
+<li><a href="https://wordpress.org/plugins/wpsso-am/">WPSSO App Meta</a></li>
+<li><a href="https://wordpress.org/plugins/wpsso-plm/">WPSSO Place and Location Meta</a></li>
+<li><a href="https://wordpress.org/plugins/wpsso-ssb/">WPSSO Social Sharing Buttons</a></li>
+</ul></p>
 </blockquote>
 
 **Pro / Power-User Version**
@@ -80,13 +88,14 @@ Display your content in the best possible way on Facebook, Google+, Twitter, Pin
 * Additional profile contact fields with configurable label and field names.
 * Custom settings and meta tag values for each Post, Page, and custom post type.
 * Options to exclude specific Google / SEO, Open Graph, and Twitter Card meta tags.
+* Support for embedded videos (iframe and object HTML tags).
 * File caching for social sharing button images and JavaScript, maximizing performance on VPS and dedicated hardware hosting platforms.
 * A stylesheets editor for each social sharing button locations (content, excerpt, shortcode, widget, etc.).
 * Dynamic button language switching based on the current WordPress locale.
 * URL shortening with Bitly or Google for URLs in Tweet texts.
 * Ability to include / exclude sharing buttons by post type.
 * Selection of preset button options by location (content, excerpt, shortcode, widget, etc.).
-* **Integrates with 3rd party plugins and services for additional image, video, product, and content information** (see [About Pro Addons](http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/) and [Integration Notes](http://surniaulula.com/codex/plugins/nextgen-facebook/installation/integration/) for details):
+* **Integrates with 3rd party plugins and services for additional image, video, product, and content information** (see [About Pro Modules](http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/) and [Integration Notes](http://surniaulula.com/codex/plugins/nextgen-facebook/installation/integration/) for details). The following modules are included with the Pro version, and are automatically loaded if/when the supported plugins and/or services are detected.
 	* Plugins
 		* All in One SEO Pack
 		* bbPress
@@ -117,7 +126,7 @@ Aside from the additional support for Twitter Cards, the main difference between
 
 **Images and Videos**
 
-NGFB detects and uses all images - associated or included in your Post or Page content - including WordPress Media Library image galleries and embedded videos from Slideshare, Vimeo, Wistia, and Youtube (including their preview images). WordPress Media Library images (and NextGEN Gallery in the Pro version) are resized according to their intended audience (Facebook, Twitter, Pinterest, etc). 
+NGFB detects and uses all images - associated or included in your Post or Page content - including WordPress image galleries. WordPress Media Library images (and NextGEN Gallery in the Pro version) are resized according to their intended audience (Facebook, Twitter, Pinterest, etc). The Pro version also detects embedded videos from Slideshare, Vimeo, Wistia, and Youtube (including their preview images).
 
 NGFB (Pro version) also includes support for [JetPack Photon](http://jetpack.me/support/photon/) and [NextGEN Gallery v1 and v2](https://wordpress.org/plugins/nextgen-gallery/) albums, galleries and images (shortcodes, image tags, album / gallery preview images, etc.).
 
@@ -148,7 +157,20 @@ NGFB comes with several sharing buttons, that you can optionally include on Post
 * **Tumblr** (Links, Quotes, Images, Videos)
 * **Twitter** (Summary, Large Image Summary, Photo, Gallery, Player and Product Cards)
 
-The Facebook, Google+ and Twitter sharing buttons support *multiple languages*. A default language can be chosen in the NGFB settings, and the [Pro version](http://surniaulula.com/extend/plugins/nextgen-facebook/) switches the sharing button language with the webpage language / WordPress locale. NGFB can also include hashtags, from WordPress and NextGEN Gallery tag names, in the Open Graph (Facebook) and Pinterest Rich Pin descriptions, Tweet text, and other social captions.
+The Facebook, Google+ and Twitter sharing buttons support *multiple languages*. A default language can be chosen in the NGFB settings, and the [Pro version](http://surniaulula.com/extend/plugins/nextgen-facebook/) switches the sharing button language with the webpage language / WordPress locale. NGFB can also include hashtags from WordPress and NextGEN Gallery tag names in the Open Graph (Facebook) and Pinterest Rich Pin descriptions, Tweet text, and other social captions.
+
+<blockquote>
+<p><strong>Don't need the sharing buttons?</strong></p>
+
+<p>Have a look at the <a href="https://wordpress.org/plugins/wpsso/">WordPress Social Sharing Optimization</a> (WPSSO) plugin &mdash; a fork (aka child) of NextGEN Facebook (NGFB). They have the same author, many of the same excellent features, but <em>WPSSO is distributed without the sharing buttons and their related features</em> (shortcodes, widgets, stylesheets, javascript caching, and url shortening). As a result, WPSSO is 25% smaller and is often preferred for websites that already have (or don't need) a set of sharing buttons.</p>
+
+<p>Additional extension plugins are also available for WPSSO, including:
+<ul>
+<li><a href="https://wordpress.org/plugins/wpsso-am/">WPSSO App Meta</a></li>
+<li><a href="https://wordpress.org/plugins/wpsso-plm/">WPSSO Place and Location Meta</a></li>
+<li><a href="https://wordpress.org/plugins/wpsso-ssb/">WPSSO Social Sharing Buttons</a></li>
+</ul></p>
+</blockquote>
 
 = Custom Contacts =
 
@@ -207,6 +229,7 @@ NGFB (Pro version) provides the [Summary](https://dev.twitter.com/docs/cards/typ
 * **Schema Meta Tags**
 	* description
 	* image
+	* url
 * **Twitter Card Meta Tags** (Pro version)
 	* twitter:card (Summary, Large Image Summary, Photo, Gallery, Player and Product)
 	* twitter:creator
@@ -242,27 +265,24 @@ NGFB is *fast and coded for performance*, making full use of all available cachi
 <p>Very Fast. A few example metrics from the <a href="https://wordpress.org/plugins/p3-profiler/">P3 (Plugin Performance Profiler)</a> plugin, using <a href="http://wptest.io/">WP Test Data</a>, and the default settings of several popular plugins, along with the WordPress Core and Twenty Fourteen theme for reference:</p>
 
 <ul>
-	<li><strong><font color="blue">0.0050</font></strong> secs - WPSSO Social Sharing Buttons (SSB) v1.0.9</li>
-	<li><strong><font color="blue">0.0116</font></strong> secs - <a href="https://wordpress.org/plugins/wpsso/">WordPress Social Sharing Optimization (WPSSO) v2.6.9</a></li>
-	<li><strong><font color="blue">0.0149</font></strong> secs - All in One SEO Pack v2.2.1</li>
-	<li><strong><font color="blue">0.0157</font></strong> secs - MarketPress - WordPress eCommerce v2.9.2.1 (No Products)</li>
-	<li><strong><font color="blue">0.0186</font></strong> secs - <em><strong>NextGEN Facebook (NGFB) v7.6.8</strong></em></li>
-
-	<li><strong><font color="green">0.0230</font></strong> secs - Easy Digital Downloads v1.9.8 (No Products)</li>
-	<li><strong><font color="green">0.0254</font></strong> secs - MailPoet Newsletters (aka Wysija Newsletters) v2.6.9</li>
-	<li><strong><font color="green">0.0322</font></strong> secs - WP e-Commerce v3.8.13.3 (No Products)</li>
-	<li><strong><font color="green">0.0345</font></strong> secs - <strong>WordPress Twenty Fourteen Theme v1.1</strong></li>
-	<li><strong><font color="green">0.0393</font></strong> secs - bbPress v2.5.3 (No Forums or Topics)</li>
-	<li><strong><font color="green">0.0425</font></strong> secs - WooCommerce v2.1.5 (No Products)</li>
-	<li><strong><font color="green">0.0488</font></strong> secs - <strong>WordPress Core v3.9.1</strong></li>
-
-	<li><strong><font color="orange">0.0572</font></strong> secs - SEO Ultimate v7.6.2</li>
-	<li><strong><font color="orange">0.0579</font></strong> secs - Facebook v1.5.5</li>
-	<li><strong><font color="orange">0.0656</font></strong> secs - BuddyPress v1.9.2 (No Activities)</li>
-
-	<li><strong><font color="red">0.1055</font></strong> secs - WordPress SEO by Yoast v1.5.4.2</li>
-	<li><strong><font color="red">0.1980</font></strong> secs - JetPack by WordPress.com v2.9.2</li>
-	<li><strong><font color="red">0.2085</font></strong> secs - NextGEN Gallery by Photocrati v2.0.66 (No Galleries or Images)</li>
+	<li><strong><font color="blue">0.0050</font></strong> secs (5.0 ms) - WPSSO Social Sharing Buttons (SSB) v1.1</li>
+	<li><strong><font color="blue">0.0116</font></strong> secs (11.6 ms) - <a href="https://wordpress.org/plugins/wpsso/">WordPress Social Sharing Optimization (WPSSO) v2.7.1</a></li>
+	<li><strong><font color="blue">0.0149</font></strong> secs (14.9 ms) - All in One SEO Pack v2.2.1</li>
+	<li><strong><font color="blue">0.0157</font></strong> secs (15.7 ms) - MarketPress - WordPress eCommerce v2.9.2.1 (No Products)</li>
+	<li><strong><font color="blue">0.0186</font></strong> secs (18.6 ms) - <em><strong>NextGEN Facebook (NGFB) v7.7.1</strong></em></li>
+	<li><strong><font color="green">0.0230</font></strong> secs (23.0 ms) - Easy Digital Downloads v1.9.8 (No Products)</li>
+	<li><strong><font color="green">0.0254</font></strong> secs (25.4 ms) - MailPoet Newsletters (aka Wysija Newsletters) v2.6.9</li>
+	<li><strong><font color="green">0.0322</font></strong> secs (32.2 ms) - WP e-Commerce v3.8.13.3 (No Products)</li>
+	<li><strong><font color="green">0.0345</font></strong> secs (34.5 ms) - <strong>WordPress Twenty Fourteen Theme v1.1</strong></li>
+	<li><strong><font color="green">0.0393</font></strong> secs (39.3 ms) - bbPress v2.5.3 (No Forums or Topics)</li>
+	<li><strong><font color="green">0.0425</font></strong> secs (42.5 ms) - WooCommerce v2.1.5 (No Products)</li>
+	<li><strong><font color="green">0.0488</font></strong> secs (48.8 ms) - <strong>WordPress Core v3.9.1</strong></li>
+	<li><strong><font color="orange">0.0572</font></strong> secs (57.2 ms) - SEO Ultimate v7.6.2</li>
+	<li><strong><font color="orange">0.0579</font></strong> secs (57.9 ms) - Facebook v1.5.5</li>
+	<li><strong><font color="orange">0.0656</font></strong> secs (65.6 ms) - BuddyPress v1.9.2 (No Activities)</li>
+	<li><strong><font color="red">0.1055</font></strong> secs (105.5 ms) - WordPress SEO by Yoast v1.5.4.2</li>
+	<li><strong><font color="red">0.1980</font></strong> secs (198.0 ms) - JetPack by WordPress.com v2.9.2</li>
+	<li><strong><font color="red">0.2085</font></strong> secs (208.5 ms) - NextGEN Gallery by Photocrati v2.0.66 (No Galleries or Images)</li>
 </ul>
 
 <p><small><em>Benchmarks were executed on dedicated hardware, using an APC opcode/object cache, WordPress v3.9.1, and P3 v1.5.1 configured with opcode optimization enabled (improves accuracy).</em></small></p>
@@ -289,6 +309,7 @@ NGFB support and development is on-going. You can review the [FAQ](http://faq.ng
 	<ul>
 		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/installation/integration/buddypress-integration/">BuddyPress Integration</a></li>
 	</ul></li>
+	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/installation/debugging-and-problem-solving/">Debugging and Problem Solving</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/installation/uninstall-the-plugin/">Uninstall the Plugin</a></li>
 </ul>
 
@@ -310,6 +331,7 @@ NGFB support and development is on-going. You can review the [FAQ](http://faq.ng
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-can-i-see-what-facebook-sees/">How can I see what Facebook sees?</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-can-i-share-a-single-nextgen-gallery-image/">How can I share a single NextGEN Gallery image?</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-do-i-attach-an-image-without-showing-it-on-the-webpage/">How do I attach an image without showing it on the webpage?</a></li>
+	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-do-i-fix-my-themes-front-page-pagination/">How do I fix my theme’s front page pagination?</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-do-i-install-the-pro-version/">How do I install the Pro version?</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/how-does-ngfb-find-detect-select-images/">How does NGFB find / detect / select images?</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/faq/social-sharing-buttons/">Social Sharing Buttons</a>
@@ -341,17 +363,16 @@ NGFB support and development is on-going. You can review the [FAQ](http://faq.ng
 == Other Notes ==
 
 <ul>
-	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/">About Pro Addons</a>
+	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/">About Pro Modules</a>
 	<ul>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/author-gravatar/">Author Gravatar</a></li>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/easy-digital-downloads/">Easy Digital Downloads</a></li>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/headspace2-seo/">HeadSpace2 SEO</a></li>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/jetpack-photon/">Jetpack Photon</a></li>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/videos-apis/">Slideshare, Vimeo, Wistia, Youtube APIs</a></li>
-		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/woocommerce/">WooCommerce</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/author-gravatar/">Author Gravatar</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/easy-digital-downloads/">Easy Digital Downloads</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/headspace2-seo/">HeadSpace2 SEO</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/jetpack-photon/">Jetpack Photon</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/videos-apis/">Slideshare, Vimeo, Wistia, Youtube APIs</a></li>
+		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/woocommerce/">WooCommerce</a></li>
 	</ul></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/contact-information/">Contact Information and Feeds</a></li>
-	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/debugging-and-problem-solving/">Debugging and Problem Solving</a></li>
 	<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/">Developer Resources</a>
 	<ul>
 		<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/constants/">Constants</a>
@@ -362,6 +383,8 @@ NGFB support and development is on-going. You can review the [FAQ](http://faq.ng
 		<ul>
 			<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/">Examples</a>
 			<ul>
+				<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/add-availability-to-product-card-for-woocommerce/">Add Availability to Product Card for WooCommerce</a></li>
+				<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/detect-youtube-url-links-as-videos/">Detect YouTube URL Links as Videos</a></li>
 				<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/force-wistia-videos-to-autoplay-on-facebook/">Force Wistia Videos to Autoplay on Facebook</a></li>
 				<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/modify-shortcode-attributes-url/">Modify Shortcode Attributes (URL)</a></li>
 				<li><a href="http://surniaulula.com/codex/plugins/nextgen-facebook/notes/developer/filters/examples/modify-the-articletag-keywords-names/">Modify the article:tag Keywords / Names</a></li>
@@ -385,129 +408,116 @@ NGFB support and development is on-going. You can review the [FAQ](http://faq.ng
 
 == Screenshots ==
 
-1. An Example Facebook Link Share
-2. An Example Facebook Video Share
-3. An Example Google+ Link Share
-4. An Example Google+ Video Share
-5. An Example Google Search Result showing Author Profile Info
-6. An Example LinkedIn Share
-7. An Example Pinterest Image Pin
-8. An Example Pinterest Product Pin
-9. An Example Pinterest Product Pin (Zoomed)
-10. An Example StumbleUpon Share
-11. An Example Tumblr 'Link' Share
-12. An Example Tumblr 'Photo' Share
-13. An Example Tumblr 'Video' Share
-14. An Example Twitter 'Summary' Card
-15. An Example Twitter 'Large Image Summary' Card
-16. An Example Twitter 'Photo' Card
-17. An Example Twitter 'Gallery' Card
-18. An Example Twitter 'Product' Card
+01. The Plugin General Settings Page
+02. The Plugin Advanced Settings Page
+03. The Plugin Social Settings on Posts and Pages
+04. An Example Facebook Link Share
+05. An Example Facebook Video Share
+06. An Example Google+ Link Share
+07. An Example Google+ Video Share
+08. An Example Google Search Result showing Author Profile Info
+09. An Example LinkedIn Share
+10. An Example Pinterest Image Pin
+11. An Example Pinterest Product Pin
+12. An Example Pinterest Product Pin (Zoomed)
+13. An Example StumbleUpon Share
+14. An Example Tumblr 'Link' Share
+15. An Example Tumblr 'Photo' Share
+16. An Example Tumblr 'Video' Share
+17. An Example Twitter 'Summary' Card
+18. An Example Twitter 'Large Image Summary' Card
+19. An Example Twitter 'Photo' Card
+20. An Example Twitter 'Gallery' Card
+21. An Example Twitter 'Product' Card
+22. An example showing all social sharing buttons enabled (using the default WPSSO SSB stylesheet) in the CSS sidebar, content text, and widget.
 
 == Changelog ==
 
-= Version 7.7.0.2 =
+<blockquote>
+<p>New versions of the plugin are released approximately every week (more or less). 
+New features are added, tested, and released incrementally, instead of grouping them together in a major version release. 
+When minor bugs fixes and/or code improvements are applied, new versions are also released.
+This release schedule keeps the code stable and reliable, at the cost of more frequent updates.</p>
+</blockquote>
+
+= Version 7.7.5.6 =
 
 * **Bugfixes**
 	* *None*
 * **Improvements**
-	* Changed the BuddyPress members/activity/groups index page description for a more generic text, instead of using the latest activity text (Pro version).
-	* Added the 'Use Filtered (SEO) Titles', 'Apply Excerpt Filters', and 'Apply Content Filters' Advanced options to the Free version as well.
+	* Minor admin CSS tweeks to adjust the settings page layout for lower resolution displays.
+	* Changed the priority for BuddyPress member pages to include the avatar image before any image from the latest activity content.
 * **New Features**
 	* *None*
 
-= Version 7.7.0.1 =
+= Version 7.7.5.5 =
 
 * **Bugfixes**
-	* Small fix to change the `NgfbMedia::get_video_info()` method from 'private' to 'public' to fetch custom meta video information (Pro version).
-* **Improvements**
-	* *None*
-* **New Features**
-	* *None*
-
-= Version 7.7 =
-
-* **Bugfixes**
-	* *None*
-* **Improvements**
-	* Removed the 'What's New' settings page (see the 'Read Me' changelog instead).
-	* Added a new 'ngfb_plugin_image_sizes' action hook to load all plugin image sizes.
-	* Renamed the 'Image and Video' tab in the custom Social Settings metabox to 'Priority Media'.
-* **New Features**
-	* Added new 'Image Dimensions' options for Open Graph and Pinterest in the custom Social Settings metabox (Pro version).
-	* Added new 'Image ID' and 'Image URL' options for Pinterest in the custom Social Settings metabox (Pro version).
-	* Added an 'image' schema meta tag with the first Open Graph image meta tag.
-	* Added an aspect ratio check for image dimensions that exceed 3:1.
-
-= Version 7.6.13.3 =
-
-* **Bugfixes**
-	* Added a check to disable social sharing buttons in RSS feeds.
+	* Allowed the NgfbMedia::get_post_images() method to be called with an empty post ID value, in order to execute the featured and attached images filters (used by some Pro modules).
 * **Improvements**
 	* *None*
 * **New Features**
 	* *None*
 
-= Version 7.6.13.2 =
+= Version 7.7.5.4 =
 
 * **Bugfixes**
-	* Fixed WooCommerce v2.2.7 shortcodes in the admin interface by loading the missing WooCommerce template functions (Pro version).
-	* Fixed the `og:description` value for BuddyPress activities by improving the `NgfbProSocialBuddypress::filter_content_seed()` method (Pro version).
-	* Fixed the sharing URL for buttons in a BuddyPress activity loop by including the `$source_id` value in the transient cache object id (Pro version).
+	* Added a test for a valid image ID when checking for featured images.
 * **Improvements**
-	* Added more detail to the error message when WordPress fails to save upgraded plugin settings.
-	* Extended the `SucomWebpage::get_content()` method arguments to include the `$post_id`, `$use_post`, `$use_cache`, `$custom`, and `$source_id` variables.
-	* Extended the 'ngfb_content_seed' filter arguments to include the `$post_id`, `$use_post`, `$custom`, and `$source_id` variables.
+	* Added a `wp_attachment_is_image()` check for attachment page media.
+	* Added support for WordPress SEO's `WPSEO_Taxonomy_Meta::get_term_meta()` static class method (Pro version).
 * **New Features**
 	* *None*
 
-= Version 7.6.13.1 =
+= Version 7.7.5.3 =
+
+* **Bugfixes**
+	* Added a check for attachment pages to include the attachment image for the Pinterest, Tumblr, and Buffer buttons.
+* **Improvements**
+	* *None*
+* **New Features**
+	* *None*
+
+= Version 7.7.5.2 =
+
+* **Bugfixes**
+	* Added a extra check for the attachment post type, in order to override the featured image and "published" post status checks.
+	* Fixed an empty array test for attachment images that would caused the plugin to always return the default image.
+* **Improvements**
+	* *None*
+* **New Features**
+	* *None*
+
+= Version 7.7.5.1 =
 
 * **Bugfixes**
 	* *None*
 * **Improvements**
-	* Enabled the Social Settings 'Social Preview' and 'Header Preview' tabs for Drafts as well.
+	* Added an extra sanity check for empty media arrays returned by the YouTube API XML (Pro version).
 * **New Features**
-	* Added a new 'Report Cache Purge Count' option on the Advanced settings page (enabled by default).
+	* *None*
 
-= Version 7.6.13 =
+= Version 7.7.5 =
 
 * **Bugfixes**
-	* Fixed a return value when URL shortening fails (should have been false instead of an empty string).
+	* *None*
 * **Improvements**
-	* Removed auto-appending the parent title to the post title if no SEO plugin is detected.
-	* Added a fallback for all custom title and description values to the Open Graph title and description.
+	* Refactored code to rename the $addons array variable to $mods, in order to clarify that all 'modules' are included in the Pro version.
+	* When checking for duplicate meta tags, added extra validation to remove our own meta tags in cases where a caching plugin or webserver is badly configured (ie. query arguments are ignored or removed).
 * **New Features**
-	* Added a 'Social Preview' tab to the Social Settings metabox.
-	* Added a NgfbHead::get_post_info() method to get basic information about the Post from the meta tag array.
+	* *None*
 
 == Upgrade Notice ==
 
-= 7.7.0.2 =
+= 7.7.5.6 =
 
-Small improvements for BuddyPress and additional Advanced options for the Free version.
+Changed the priority for BuddyPress member images (Pro version). Admin CSS tweeks for lower resolution displays.
 
-= 7.7.0.1 =
+= 7.7.5.5 =
 
-Small fix to change the NgfbMedia::get_video_info() method from 'private' to 'public' to fetch custom meta video information (Pro version).
+Minor fix to allow the NgfbMedia::get_post_images() method to be called with an empty post ID value.
 
-= 7.7 =
+= 7.7.5.4 =
 
-New 'Image Dimensions' options for Open Graph and Pinterest in the custom Social Settings metabox (Pro version), plus other new features and improvements.
-
-= 7.6.13.3 =
-
-Added a check to disable social sharing buttons in RSS feeds.
-
-= 7.6.13.2 =
-
-Fixes for the WooCommerce and BuddyPress support addons (Pro version).
-
-= 7.6.13.1 =
-
-A new 'Report Cache Purge Count' option, and 'Social Preview' and 'Header Preview' tabs enabled for Drafts as well.
-
-= 7.6.13 =
-
-Adds a new 'Social Preview' tab to the Social Settings metabox, improved title and description handling in some special cases, fix to better control URL rewriting service failures.
+Added a test for a valid image ID when checking for featured images, and a wp_attachment_is_image() check for attachment page media.
 

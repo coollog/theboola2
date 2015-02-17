@@ -101,7 +101,10 @@ function ap_default_options(){
 		'min_tags'				=> 2,
 		'allow_anonymous'		=> false,
 		'enable_captcha_skip'	=> false,
-		'captcha_skip_rpoints'	=> 40
+		'captcha_skip_rpoints'	=> 40,
+		'only_admin_can_answer'	=> false,
+		'logged_in_can_see_ans'	=> false,
+		'logged_in_can_see_comment'	=> false
 	);
 }
 
@@ -255,9 +258,11 @@ function ap_get_link_to($sub){
 }
 
 function ap_comment_btn_html(){
-	$action = get_post_type(get_the_ID()).'-'.get_the_ID();
-	$nonce = wp_create_nonce( $action );
-	echo '<a href="#ap-comment-area-'.get_the_ID().'" class="comment-btn" data-action="ap-load-comment" data-args="'. get_the_ID().'-'. $nonce .'" title="'.__('Add comment', 'ap').'">'.__('Comment', 'ap').'</a>';
+	if(ap_user_can_comment()){
+		$action = get_post_type(get_the_ID()).'-'.get_the_ID();
+		$nonce = wp_create_nonce( $action );
+		echo '<a href="#ap-comment-area-'.get_the_ID().'" class="comment-btn" data-action="ap-load-comment" data-args="'. get_the_ID().'-'. $nonce .'" title="'.__('Add comment', 'ap').'">'.__('Comment', 'ap').'</a>';
+	}
 }
 function ap_edit_q_btn_html(){
 	$post_id = get_the_ID();
@@ -266,7 +271,7 @@ function ap_edit_q_btn_html(){
 		$nonce = wp_create_nonce( $action );
 		$edit_link = add_query_arg( array('edit_q' => $post_id, 'nonce' => $nonce), get_permalink( ap_opt('base_page')) );
 		//$args = json_encode(array('action' => 'ap_load_edit_form', 'id'=> $post_id, 'nonce' => $nonce, 'type' => 'question'));
-		echo "<a href='$edit_link' data-button='ap-edit-post' title='".__('Edit this question', 'ap')."'>".__('Edit', 'ap')."</a>";
+		echo "<a href='$edit_link' data-button='ap-edit-post' title='".__('Edit this question', 'ap')."' class='apEditBtn ".ap_icon('edit')."'><span>".__('Edit', 'ap')."</span></a>";
 	}
 	return;
 }
@@ -282,6 +287,18 @@ function ap_edit_a_btn_html(){
 	}
 	return;
 }
+
+function ap_post_edited_time() {
+	if (get_the_time('s') != get_the_modified_time('s')){
+		printf('<span class="edited-text">%1$s</span> <span class="edited-time">%2$s</span>',
+		__('Edited on','ap'),
+		get_the_modified_time()
+		);
+	
+	}
+	return;
+}
+
 function ap_answer_edit_link(){
 	$post_id = get_the_ID();
 	if(ap_user_can_edit_ans($post_id)){		
@@ -374,7 +391,7 @@ function ap_answers_list($question_id, $order = 'voted'){
 				),
 				array(
 					'key' => ANSPRESS_BEST_META,
-					'compare' => 'NOT EXISTS'
+					//'compare' => 'NOT EXISTS'
 				)
 			)
 		);
@@ -393,7 +410,7 @@ function ap_answers_list($question_id, $order = 'voted'){
 				'relation' => 'OR',
 				array(
 					'key' => ANSPRESS_BEST_META,
-					'compare' => 'NOT EXISTS'
+					//'compare' => 'NOT EXISTS'
 				)
 			)
 		);
@@ -412,7 +429,7 @@ function ap_answers_list($question_id, $order = 'voted'){
 				'relation' => 'OR',
 				array(
 					'key' => ANSPRESS_BEST_META,
-					'compare' => 'NOT EXISTS'
+					//'compare' => 'NOT EXISTS'
 				)
 			)
 		);
@@ -424,13 +441,18 @@ function ap_answers_list($question_id, $order = 'voted'){
 	
 	// get answer sorting tab
 	echo '<div id="answers-c">';
-	ap_ans_tab(); 	
-	echo '<div id="answers">';
-		while ( $ans->have_posts() ) : $ans->the_post(); 
-			include(ap_get_theme_location('answer.php'));
-		endwhile ;
-	echo '</div>';	
-	ap_pagination('', 2, $paged, $ans);
+		if(ap_user_can_see_answers()){
+			ap_ans_tab(); 	
+			echo '<div id="answers">';
+				while ( $ans->have_posts() ) : $ans->the_post(); 
+					include(ap_get_theme_location('answer.php'));
+				endwhile ;
+			echo '</div>';	
+			ap_pagination('', 2, $paged, $ans);
+		}else{
+			echo '<div class="ap-login-to-see-ans">'.sprintf(__('Please %s or %s to view answers and comments', 'ap'), '<a class="ap-open-modal ap-btn" title="Click here to login if you already have an account on this site." href="#ap_login_modal">Login</a>', '<a class="ap-open-modal ap-btn" title="Click here to signup if you do not have an account on this site." href="#ap_signup_modal">Sign Up</a>').'</div>';
+			echo do_action('ap_after_answer_form');
+		}
 	echo '</div>';
 	wp_reset_query();
 }
@@ -579,10 +601,10 @@ function ap_select_answer_btn_html($post_id){
 	$nonce = wp_create_nonce( $action );	
 	
 	if(!ap_is_answer_selected($ans->post_parent)){		
-		return '<a href="#" class="ap-btn-select ap-sicon ap-icon-checkmark ap-tip" data-button="ap-select-answer" data-args="'. $post_id.'-'. $nonce .'" title="'.__('Select this answer as best', 'ap').'"></a>';
+		return '<a href="#" class="ap-btn-select ap-sicon '.ap_icon('tick').' ap-tip" data-button="ap-select-answer" data-args="'. $post_id.'-'. $nonce .'" title="'.__('Select this answer as best', 'ap').'"></a>';
 		
 	}elseif(ap_is_answer_selected($ans->post_parent) && ap_is_best_answer($ans->ID)){
-		return '<a href="#" class="ap-btn-select ap-sicon ap-icon-checkmark selected ap-tip" data-button="ap-select-answer" data-args="'. $post_id.'-'. $nonce .'" title="'.__('Unselect this answer', 'ap').'"></a>';
+		return '<a href="#" class="ap-btn-select ap-sicon '.ap_icon('tick').' selected ap-tip" data-button="ap-select-answer" data-args="'. $post_id.'-'. $nonce .'" title="'.__('Unselect this answer', 'ap').'"></a>';
 		
 	}
 }
@@ -785,7 +807,7 @@ function ap_base_page_main_query($parent_id = false){
 	$question_args=array(
 		'ap_query' 		=> 'main_questions',
 		'post_type' 	=> 'question',
-		'post_status' 	=> array('publish', 'moderate', 'private_question'),
+		'post_status' 	=> array('publish', 'moderate', 'private_question', 'closed'),
 		'showposts' 	=> ap_opt('question_per_page'),
 		'paged' 		=> $paged,
 	);
@@ -804,7 +826,7 @@ function ap_base_page_main_query($parent_id = false){
 			'relation' => 'OR',
 			array(
 				'key' => ANSPRESS_UPDATED_META,
-				'compare' => 'NOT EXISTS',
+				//'compare' => 'NOT EXISTS',
 			),
 		);	
 		
@@ -845,7 +867,9 @@ function ap_base_page_main_query($parent_id = false){
 function ap_qa_on_post($post_id = false){
 	if(is_anspress())
 		return false;
-		
+	
+	wp_enqueue_style( 'ap-style', ap_get_theme_url('css/ap.css'), array(), AP_VERSION);
+	
 	if(!$post_id)
 		$post_id = get_the_ID();
 	
@@ -876,11 +900,19 @@ function ap_ask_btn($parent_id = false){
 
 function ap_icon($name){
 	$icons = array(
-		'follow' 		=> 'ap-icon-plus',
-		'unfollow' 		=> 'ap-icon-minus',
-		'upload' 		=> 'ap-icon-upload',
-		'unchecked' 	=> 'ap-icon-checkbox-unchecked',
-		'checked' 		=> 'ap-icon-checkbox-checked',
+		'follow' 			=> 'ap-icon-plus',
+		'unfollow' 			=> 'ap-icon-minus',
+		'upload' 			=> 'ap-icon-upload',
+		'unchecked' 		=> 'ap-icon-checkbox-unchecked',
+		'checked' 			=> 'ap-icon-checkbox-checked',
+		'tick' 				=> 'ap-icon-tick',
+		'new_question' 		=> 'ap-icon-question',
+		'new_answer' 		=> 'ap-icon-answer',
+		'new_comment' 		=> 'ap-icon-comment',
+		'new_comment_answer'=> 'ap-icon-comment',
+		'edit_question' 	=> 'ap-icon-pencil',
+		'edit_answer' 		=> 'ap-icon-pencil',
+		'edit_comment' 		=> 'ap-icon-pencil',
 	);
 	
 	$icons = apply_filters('ap_icon', $icons);

@@ -81,6 +81,9 @@ function wpuxss_eml_taxonomies_validate($input)
         if ( !isset($params['media_uploader_filter']) )
             $input[$taxonomy]['media_uploader_filter'] = 0;
             
+        if ( !isset($params['rewrite']['with_front']) )
+            $input[$taxonomy]['rewrite']['with_front'] = 0;
+            
         $input[$taxonomy]['hierarchical'] = intval($input[$taxonomy]['hierarchical']);
         $input[$taxonomy]['sort'] = intval($input[$taxonomy]['sort']);
         $input[$taxonomy]['show_admin_column'] = intval($input[$taxonomy]['show_admin_column']);
@@ -88,6 +91,7 @@ function wpuxss_eml_taxonomies_validate($input)
         $input[$taxonomy]['assigned'] = intval($input[$taxonomy]['assigned']);
         $input[$taxonomy]['admin_filter'] = intval($input[$taxonomy]['admin_filter']);
         $input[$taxonomy]['media_uploader_filter'] = intval($input[$taxonomy]['media_uploader_filter']);
+        $input[$taxonomy]['rewrite']['with_front'] = intval($input[$taxonomy]['rewrite']['with_front']);
         
         if ( isset($params['labels']) )
         {
@@ -137,25 +141,35 @@ add_action( 'wp_ajax_query-attachments', 'wpuxss_eml_ajax_query_attachments', 0 
 
 function wpuxss_eml_ajax_query_attachments() {
     
+    global $wp_version;
+    
     if ( ! current_user_can( 'upload_files' ) )
         wp_send_json_error();
         
     $query = isset( $_REQUEST['query'] ) ? (array) $_REQUEST['query'] : array();
     
-    // TODO: rewrite date query as soon as WP core bug fixed
-    if ( isset( $query['year'] ) && $query['year'] && 
-         isset( $query['monthnum'] ) && $query['monthnum'] ) {
-             
-        $query['m'] = $query['year'] . $query['monthnum'];
-    } else {
+    if ( version_compare( $wp_version, '4.1', '<' ) ) {
+
+        if ( isset( $query['year'] ) && $query['year'] && 
+             isset( $query['monthnum'] ) && $query['monthnum'] ) {
+                 
+            $query['m'] = $query['year'] . $query['monthnum'];
+        } else {
+            
+            $query['m'] = '';
+        }
         
-        $query['m'] = '';
-    }
+        $query = array_intersect_key( $query, array_flip( array(
+            's', 'order', 'orderby', 'posts_per_page', 'paged', 'post_mime_type',
+            'post_parent', 'post__in', 'post__not_in', 'm'
+        ) ) );
+    } else {
     
-    $query = array_intersect_key( $query, array_flip( array(
-        's', 'order', 'orderby', 'posts_per_page', 'paged', 'post_mime_type',
-        'post_parent', 'post__in', 'post__not_in', 'm'
-    ) ) );
+        $query = array_intersect_key( $query, array_flip( array(
+            's', 'order', 'orderby', 'posts_per_page', 'paged', 'post_mime_type',
+            'post_parent', 'post__in', 'post__not_in', 'year', 'monthnum'
+        ) ) );
+    }
         
     $query['tax_query'] = array( 'relation' => 'AND' );
 
@@ -325,7 +339,7 @@ function wpuxss_eml_attachment_fields_to_edit( $form_fields, $post ) {
     foreach ( get_attachment_taxonomies($post) as $taxonomy ) {
         
         $t = (array) get_taxonomy($taxonomy);
-        if ( ! $t['public'] || ! $t['show_ui'] )
+        if ( ! $t['show_ui'] )
             continue;
         if ( empty($t['label']) )
             $t['label'] = $taxonomy;
@@ -344,7 +358,7 @@ function wpuxss_eml_attachment_fields_to_edit( $form_fields, $post ) {
         $t['value'] = join(', ', $values);
         $t['show_in_edit'] = false;
         
-        if ( $t['hierarchical'] ) 
+        if ( $t['hierarchical'] && function_exists( 'wp_terms_checklist' ) ) 
         {
             ob_start();
             

@@ -3,8 +3,8 @@ Contributors: mythemeshop
 Creator's website link: http://mythemeshop.com/
 Tags: shortcodes, shortcode, shortcodes list, toggle shortcode, buttons, google map shortcode, youtube shortcode, viemo shortcode, alert shortcode, notification shortcode, column shortcodes
 Requires at least: 3.0.1
-Tested up to: 4.0
-Stable tag: 1.2
+Tested up to: 4.1
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,11 @@ Please disable all plugins and check if shortcode plugin is working properly. Th
 7. Google Maps Shortcode
 
 == Changelog ==
+
+= 1.3 =
+* Added Tooltip shortcode
+* Fixed tab titles issue
+* Made embed URLs protocol-relative
 
 = 1.2 =
 * Made compatible with (with TinyMCE 3 & 4).

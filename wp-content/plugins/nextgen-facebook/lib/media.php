@@ -52,9 +52,12 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 		}
 
 		public function get_size_info( $size_name = 'thumbnail' ) {
+			if ( is_integer( $size_name ) ) 
+				return;
+			if ( is_array( $size_name ) ) 
+				return;
+
 			global $_wp_additional_image_sizes;
-			if ( is_integer( $size_name ) ) return;
-			if ( is_array( $size_name ) ) return;
 
 			if ( isset( $_wp_additional_image_sizes[$size_name]['width'] ) )
 				$width = intval( $_wp_additional_image_sizes[$size_name]['width'] );
@@ -65,8 +68,11 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 			else $height = get_option( $size_name.'_size_h' );
 
 			if ( isset( $_wp_additional_image_sizes[$size_name]['crop'] ) )
-				$crop = intval( $_wp_additional_image_sizes[$size_name]['crop'] );
-			else $crop = get_option( $size_name.'_crop' ) ? true : false;
+				$crop = $_wp_additional_image_sizes[$size_name]['crop'];
+			else $crop = get_option( $size_name.'_crop' );
+
+			if ( ! is_array( $crop ) )
+				$crop = empty( $crop ) ? false : true;
 
 			return array( 'width' => $width, 'height' => $height, 'crop' => $crop );
 		}
@@ -80,100 +86,109 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 		}
 
 		public function get_post_images( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $meta_pre = 'og' ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'post_id' => $post_id, 'check_dupes' => $check_dupes, 'meta_pre' => $meta_pre ) );
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'post_id' => $post_id,
+				'check_dupes' => $check_dupes,
+				'meta_pre' => $meta_pre,
+			) );
 			$og_ret = array();
+			$force_regen = false;
 
+			if ( ! empty( $post_id ) ) {
+
+				if ( ! empty( $this->p->options['plugin_auto_img_resize'] ) ) {
+					$force_regen_transient_id = $this->p->cf['lca'].'_post_'.$post_id.'_regen_'.$meta_pre;
+					$force_regen = get_transient( $force_regen_transient_id );
+					if ( $force_regen !== false )
+						delete_transient( $force_regen_transient_id );
+				} 
+	
+				if ( ! $this->p->util->is_maxed( $og_ret, $num ) ) {
+					$num_remains = $this->num_remains( $og_ret, $num );
+					$og_ret = array_merge( $og_ret, $this->p->mods['util']['postmeta']->get_og_image( $num_remains, 
+						$size_name, $post_id, $check_dupes, $force_regen, $meta_pre ) );
+				}
+			}
+	
+			// allow for empty post_id in order to execute featured/attached image filters for modules
 			if ( ! $this->p->util->is_maxed( $og_ret, $num ) ) {
 				$num_remains = $this->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->p->addons['util']['postmeta']->get_og_image( $num_remains, $size_name, $post_id, $check_dupes, $meta_pre ) );
+				$og_ret = array_merge( $og_ret, $this->get_featured( $num_remains, 
+					$size_name, $post_id, $check_dupes, $force_regen ) );
 			}
 
 			if ( ! $this->p->util->is_maxed( $og_ret, $num ) ) {
 				$num_remains = $this->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->get_featured( $num_remains, $size_name, $post_id, $check_dupes ) );
-			}
-
-			if ( ! $this->p->util->is_maxed( $og_ret, $num ) ) {
-				$num_remains = $this->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->get_attached_images( $num_remains, $size_name, $post_id, $check_dupes ) );
+				$og_ret = array_merge( $og_ret, $this->get_attached_images( $num_remains, 
+					$size_name, $post_id, $check_dupes, $force_regen ) );
 			}
 
 			return $og_ret;
 		}
 
-		public function get_featured( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'post_id' => $post_id, 'check_dupes' => $check_dupes ) );
+		public function get_featured( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'post_id' => $post_id,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$og_ret = array();
 			$og_image = array();
-			if ( ! empty( $post_id ) && $this->p->is_avail['postthumb'] == true && has_post_thumbnail( $post_id ) ) {
-				$pid = get_post_thumbnail_id( $post_id );
-				list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'], 
-					$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes );
-				if ( ! empty( $og_image['og:image'] ) )
-					$this->p->util->push_max( $og_ret, $og_image, $num );
+			if ( ! empty( $post_id ) ) {
+				// check for an attachment page, just in case
+				if ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) &&
+					wp_attachment_is_image( $post_id ) ) {
+					$this->p->debug->log( 'post_type is an attachment - using post_id '.$post_id. ' as the image id' );
+					$pid = $post_id;
+				} elseif ( $this->p->is_avail['postthumb'] == true && has_post_thumbnail( $post_id ) )
+					$pid = get_post_thumbnail_id( $post_id );
+				else $pid = false;
+
+				if ( ! empty( $pid ) ) {
+					list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'], 
+						$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes, $force_regen );
+					if ( ! empty( $og_image['og:image'] ) )
+						$this->p->util->push_max( $og_ret, $og_image, $num );
+				}
 			}
-			return apply_filters( $this->p->cf['lca'].'_og_featured', $og_ret, $num, $size_name, $post_id, $check_dupes );
+			return apply_filters( $this->p->cf['lca'].'_og_featured', $og_ret, $num, 
+				$size_name, $post_id, $check_dupes, $force_regen );
 		}
 
 		public function get_first_attached_image_id( $post_id ) {
 			if ( ! empty( $post_id ) ) {
-				$images = get_children( array( 'post_parent' => $post_id, 'post_type' => 'attachment', 'post_mime_type' => 'image' ) );
-				$attach = reset( $images );
-				if ( ! empty( $attach->ID ) )
-					return $attach->ID;
-			}
-			return;
-		}
-
-		public function get_image_preview_html( $og_image, $size_name, $size_info, $msgs = array() ) {
-			if ( ! isset( $msgs['not_found'] ) )
-				$msgs['not_found'] = '<p>No Image Found</p>';
-			if ( ! isset( $msgs['too_small'] ) )
-				$msgs['too_small'] = '<p>Image Dimensions Too Small</p>';
-			if ( ! isset( $msgs['no_size'] ) )
-				$msgs['no_size'] = '<p>Image Dimensions Unknown</p>';
-			$html = '';
-			$div_size = 'width:'.$size_info['width'].'px; height:'.$size_info['height'].'px;';
-			$have_sizes = ( ! empty( $og_image['og:image:width'] ) && 
-				! empty( $og_image['og:image:height'] ) ) ? true : false;
-			$is_sufficient = ( $have_sizes === true &&
-				$og_image['og:image:width'] >= $size_info['width'] &&
-				$og_image['og:image:height'] >= $size_info['height'] ) ? true : false;
-
-			// get a smaller preview size if original is large enough
-			if ( ! empty( $og_image['og:image:id'] ) && $is_sufficient === true ) {
-				list( $url, $width, $height, $cropped, $pid ) = $this->p->media->get_attachment_image_src( $og_image['og:image:id'], $size_name, false );
-				if ( ! empty( $url ) )
-					$html = '<div class="preview_img" style="'.$div_size.'"><img src="'.$url.'" width="'.$width.'" height="'.$height.'" /></div>';
-			}
-			if ( empty( $html ) ) {
-				foreach ( array( 'og:image:secure_url', 'og:image' ) as $key ) {
-					if ( ! empty( $og_image[$key] ) ) {
-						if ( $have_sizes === true ) {
-							$html = '<div class="preview_img" style="'.$div_size.' 
-							background-size:'.( $is_sufficient === true ? 'cover' : $og_image['og:image:width'].' '.$og_image['og:image:height'] ).'; 
-							background-image:url('.$og_image[$key].');" />'.( $is_sufficient === true ? '' : $msgs['too_small'] ).'</div>';
-						} else {
-							$html = '<div class="preview_img" style="'.$div_size.' 
-							background-image:url('.$og_image[$key].');" />'.$msgs['no_size'].'</div>';
-						}
-						break;
-					}
+				// check for an attachment page, just in case
+				if ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) &&
+					wp_attachment_is_image( $post_id ) )
+						return $post_id;
+				else {
+					$images = get_children( array( 'post_parent' => $post_id, 'post_type' => 'attachment', 'post_mime_type' => 'image' ) );
+					$attach = reset( $images );
+					if ( ! empty( $attach->ID ) )
+						return $attach->ID;
 				}
 			}
-			if ( empty( $html ) )
-				$html = '<div class="preview_img" style="'.$div_size.'">'.$msgs['not_found'].'</div>';
-			return $html;
+			return false;
 		}
 
-		public function get_attachment_image( $num = 0, $size_name = 'thumbnail', $attach_id, $check_dupes = true ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'attach_id' => $attach_id, 'check_dupes' => $check_dupes ) );
+		public function get_attachment_image( $num = 0, $size_name = 'thumbnail', $attach_id, $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array( 
+				'num' => $num,
+				'size_name' => $size_name,
+				'attach_id' => $attach_id,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$og_ret = array();
 			if ( ! empty( $attach_id ) ) {
 				if ( wp_attachment_is_image( $attach_id ) ) {	// since wp 2.1.0 
 					$og_image = array();
 					list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'], 
-						$og_image['og:image:id'] ) = $this->get_attachment_image_src( $attach_id, $size_name, $check_dupes );
+						$og_image['og:image:id'] ) = $this->get_attachment_image_src( $attach_id, $size_name, $check_dupes, $force_regen );
 					if ( ! empty( $og_image['og:image'] ) &&
 						$this->p->util->push_max( $og_ret, $og_image, $num ) )
 							return $og_ret;
@@ -182,8 +197,14 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 			return $og_ret;
 		}
 
-		public function get_attached_images( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'post_id' => $post_id, 'check_dupes' => $check_dupes ) );
+		public function get_attached_images( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'post_id' => $post_id,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$og_ret = array();
 			if ( ! empty( $post_id ) ) {
 				$images = get_children( array( 'post_parent' => $post_id, 'post_type' => 'attachment', 'post_mime_type' => 'image') );
@@ -199,31 +220,37 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 					foreach ( $attach_ids as $pid ) {
 						$og_image = array();
 						list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'],
-							$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes );
+							$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes, $force_regen );
 						if ( ! empty( $og_image['og:image'] ) &&
 							$this->p->util->push_max( $og_ret, $og_image, $num ) )
 								break;	// end foreach and apply filters
 					}
 			}
-			return apply_filters( $this->p->cf['lca'].'_attached_images', $og_ret, $num, $size_name, $post_id, $check_dupes );
+			return apply_filters( $this->p->cf['lca'].'_attached_images', $og_ret, $num, 
+				$size_name, $post_id, $check_dupes );
 		}
 
-		public function get_attachment_image_src( $pid, $size_name = 'thumbnail', $check_dupes = true ) {
-			$this->p->debug->args( array( 'pid' => $pid, 'size_name' => $size_name, 'check_dupes' => $check_dupes ) );
+		public function get_attachment_image_src( $pid, $size_name = 'thumbnail', $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array(
+				'pid' => $pid,
+				'size_name' => $size_name,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$size_info = $this->get_size_info( $size_name );
 			$img_url = '';
 			$img_width = -1;
 			$img_height = -1;
-			$img_cropped = empty( $size_info['crop'] ) ? 0 : 1;
+			$img_cropped = $size_info['crop'] === false ? 0 : 1;	// get_size_info() returns false, true, or an array
 			$ret_empty = array( null, null, null, null, null );
 
 			if ( $this->p->is_avail['media']['ngg'] === true && strpos( $pid, 'ngg-' ) === 0 ) {
-				if ( ! empty( $this->p->addons['media']['ngg'] ) )
-					return $this->p->addons['media']['ngg']->get_image_src( $pid, $size_name, $check_dupes );
+				if ( ! empty( $this->p->mods['media']['ngg'] ) )
+					return $this->p->mods['media']['ngg']->get_image_src( $pid, $size_name, $check_dupes );
 				else {
 					if ( is_admin() )
-						$this->p->notice->err( 'The NextGEN Gallery addon is not available: image id '.$pid.' ignored.' ); 
-					else $this->p->debug->log( 'ngg addon is not available: image id '.$attr_value.' ignored' ); 
+						$this->p->notice->err( 'The NextGEN Gallery module is not available: image id '.$pid.' ignored.' ); 
+					$this->p->debug->log( 'ngg module is not available: image id '.$attr_value.' ignored' ); 
 					return $ret_empty; 
 				}
 			} elseif ( ! wp_attachment_is_image( $pid ) ) {
@@ -231,12 +258,13 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 				return $ret_empty; 
 			}
 
-			if ( strpos( $size_name, $this->p->cf['lca'].'-' ) !== false ) {	// only resize our own custom image sizes
-				if ( ! empty( $this->p->options['plugin_auto_img_resize'] ) ) {	// 'Auto-Resize Images' option must be enabled
+			if ( strpos( $size_name, $this->p->cf['lca'].'-' ) !== false ) {		// only resize our own custom image sizes
+				if ( ! empty( $this->p->options['plugin_auto_img_resize'] ) ) {		// auto-resize images option must be enabled
 
 					$img_meta = wp_get_attachment_metadata( $pid );
-	
-					if ( empty( $img_meta['sizes'][$size_name] ) ) {	// does the image metadata contain our image sizes?
+
+					// does the image metadata contain our image sizes?
+					if ( $force_regen === true || empty( $img_meta['sizes'][$size_name] ) ) {
 						$is_accurate_width = false;
 						$is_accurate_height = false;
 					} else {
@@ -247,7 +275,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 							$img_meta['sizes'][$size_name]['height'] == $size_info['height'] ? true : false;
 
 						// if not cropped, make sure the resized image respects the original aspect ratio
-						if ( $is_accurate_width && $is_accurate_height && empty( $size_info['crop'] ) ) {
+						if ( $is_accurate_width && $is_accurate_height && $img_cropped === 0 ) {
 							if ( $img_meta['width'] > $img_meta['height'] ) {
 								$ratio = $img_meta['width'] / $size_info['width'];
 								$check = 'height';
@@ -276,7 +304,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 							else $this->p->debug->log( 'image metadata ('.
 								( empty( $img_meta['sizes'][$size_name]['width'] ) ? 0 : $img_meta['sizes'][$size_name]['width'] ).'x'.
 								( empty( $img_meta['sizes'][$size_name]['height'] ) ? 0 : $img_meta['sizes'][$size_name]['height'] ).') does not match '.
-								$size_name.' ('.$size_info['width'].'x'.$size_info['height'].( empty( $size_info['crop'] ) ? '' : ' cropped' ).')' );
+								$size_name.' ('.$size_info['width'].'x'.$size_info['height'].( $img_cropped === 0 ? '' : ' cropped' ).')' );
 						}
 	
 						$fullsizepath = get_attached_file( $pid );
@@ -290,8 +318,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 				} else $this->p->debug->log( 'image metadata check skipped: plugin_auto_img_resize option is disabled' );
 			}
 
-			list( $img_url, $img_width, $img_height ) = apply_filters( $this->p->cf['lca'].'_image_downsize', 
-				image_downsize( $pid, $size_name ), $pid, $size_name );
+			list( $img_url, $img_width, $img_height ) = apply_filters( $this->p->cf['lca'].'_image_downsize', image_downsize( $pid, $size_name ), $pid, $size_name );
 			$this->p->debug->log( 'image_downsize() = '.$img_url.' ('.$img_width.'x'.$img_height.')' );
 
 			if ( empty( $img_url ) ) {
@@ -299,7 +326,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 				return $ret_empty;
 			}
 
-			// check for resulting image dimenions that may be too small
+			// check for resulting image dimensions that may be too small
 			if ( ! empty( $this->p->options['plugin_ignore_small_img'] ) ) {
 
 				$is_sufficient_width = $img_width >= $size_info['width'] ? true : false;
@@ -313,7 +340,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 					$img_meta = wp_get_attachment_metadata( $pid );
 
 					$is_too_small_text = ' is too small for '.$size_name.' ('.$size_info['width'].'x'.$size_info['height'].
-						( empty( $size_info['crop'] ) ? '' : ' cropped' ).')';
+						( $img_cropped === 0 ? '' : ' cropped' ).')';
 					if ( ! empty( $img_meta['width'] ) && ! empty( $img_meta['height'] ) &&
 						$img_meta['width'] < $size_info['width'] && $img_meta['height'] < $size_info['height'] )
 							$rejected_text = 'image id '.$pid.' rejected - full size image ('.
@@ -341,29 +368,34 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 			}
 
 			if ( $check_dupes == false || $this->p->util->is_uniq_url( $img_url ) )
-				return array( apply_filters( $this->p->cf['lca'].'_rewrite_url', $img_url ), 
-					$img_width, $img_height, $img_cropped, $pid );
+				return array( apply_filters( $this->p->cf['lca'].'_rewrite_url', $img_url ), $img_width, $img_height, $img_cropped, $pid );
 
 			return $ret_empty;
 		}
 
-		public function get_author_image( $num = 0, $size_name = 'thumbnail', $author_id, $check_dupes = true ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'author_id' => $author_id, 'check_dupes' => $check_dupes ) );
+		public function get_author_image( $num = 0, $size_name = 'thumbnail', $author_id, $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'author_id' => $author_id,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$og_ret = array();
 			$og_image = array();
 
-			if ( empty( $author_id ) || ! isset( $this->p->addons['util']['user'] ) )
+			if ( empty( $author_id ) || ! isset( $this->p->mods['util']['user'] ) )
 				return $og_ret;
 
-			$pid = $this->p->addons['util']['user']->get_options( $author_id, 'og_img_id' );
-			$pre = $this->p->addons['util']['user']->get_options( $author_id, 'og_img_id_pre' );
-			$img_url = $this->p->addons['util']['user']->get_options( $author_id, 'og_img_url', array( 'size_name' => $size_name ) );
+			$pid = $this->p->mods['util']['user']->get_options( $author_id, 'og_img_id' );
+			$pre = $this->p->mods['util']['user']->get_options( $author_id, 'og_img_id_pre' );
+			$img_url = $this->p->mods['util']['user']->get_options( $author_id, 'og_img_url', array( 'size_name' => $size_name ) );
 
 			if ( $pid > 0 ) {
 				$pid = $pre === 'ngg' ? 'ngg-'.$pid : $pid;
 				$this->p->debug->log( 'found custom user image id = '.$pid );
 				list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'], 
-					$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes );
+					$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes, $force_regen );
 
 			}
 
@@ -379,8 +411,13 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 			return $og_ret;
 		}
 
-		public function get_default_image( $num = 0, $size_name = 'thumbnail', $check_dupes = true ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'check_dupes' => $check_dupes ) );
+		public function get_default_image( $num = 0, $size_name = 'thumbnail', $check_dupes = true, $force_regen = false ) {
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'check_dupes' => $check_dupes,
+				'force_regen' => $force_regen,
+			) );
 			$og_ret = array();
 			$og_image = array();
 
@@ -397,7 +434,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 				$pid = $pre === 'ngg' ? 'ngg-'.$pid : $pid;
 				$this->p->debug->log( 'using default img pid = '.$pid );
 				list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'],
-					$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes );
+					$og_image['og:image:id'] ) = $this->get_attachment_image_src( $pid, $size_name, $check_dupes, $force_regen );
 			}
 
 			if ( empty( $og_image['og:image'] ) && ! empty( $url ) ) {
@@ -427,7 +464,7 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 			}
 
 			// img attributes in order of preference
-			// data_tags_preg provides a filter hook for 3rd party addons like ngg to return image information
+			// data_tags_preg provides a filter hook for 3rd party modules like ngg to return image information
 			if ( preg_match_all( '/<('.$this->data_tags_preg.'[^>]*? '.$this->data_attr_preg.'=[\'"]([0-9]+)[\'"]|'.
 				'(img)[^>]*? (data-share-src|src)=[\'"]([^\'"]+)[\'"])[^>]*>/s', $content, $match, PREG_SET_ORDER ) ) {
 				$this->p->debug->log( count( $match ).' x matching <'.$this->data_tags_preg.'/> html tag(s) found' );
@@ -449,18 +486,18 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 							list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'],
 								$og_image['og:image:id'] ) = $this->get_attachment_image_src( $attr_value, $size_name, false );
 							break;
-						// filter hook for 3rd party addons to return image information
+						// filter hook for 3rd party modules to return image information
 						case ( preg_match( '/^data-[a-z]+-pid$/', $attr_name ) ? true : false ):
 							$filter_name = $this->p->cf['lca'].'_get_content_'.$tag_name.'_'.( preg_replace( '/-/', '_', $attr_name ) );
 							list( $og_image['og:image'], $og_image['og:image:width'], $og_image['og:image:height'], $og_image['og:image:cropped'],
 								$og_image['og:image:id'] ) = apply_filters( $filter_name, array( null, null, null, null ), $attr_value, $size_name, false );
 							break;
 						default :
-							// prevent duplicates by silently ignoring ngg images (already processed by the ngg addon)
+							// prevent duplicates by silently ignoring ngg images (already processed by the ngg module)
 							if ( $this->p->is_avail['media']['ngg'] === true && 
-								! empty( $this->p->addons['media']['ngg'] ) &&
+								! empty( $this->p->mods['media']['ngg'] ) &&
 									( strpos( $tag_value, " class='ngg-" ) !== false || 
-										preg_match( '/^'.$this->p->addons['media']['ngg']->img_src_preg.'$/', $attr_value ) ) )
+										preg_match( '/^'.$this->p->mods['media']['ngg']->img_src_preg.'$/', $attr_value ) ) )
 											break;
 	
 							// recognize gravatar images in the content
@@ -547,8 +584,8 @@ if ( ! class_exists( 'NgfbMedia' ) ) {
 				} else $this->p->debug->log( '[gallery] shortcode(s) not found' );
 			}
 			// check for ngg gallery
-			if ( $this->p->is_avail['media']['ngg'] === true && ! empty( $this->p->addons['media']['ngg'] ) ) {
-				$og_ret = $this->p->addons['media']['ngg']->get_gallery_images( $num , $size_name, $get, $check_dupes );
+			if ( $this->p->is_avail['media']['ngg'] === true && ! empty( $this->p->mods['media']['ngg'] ) ) {
+				$og_ret = $this->p->mods['media']['ngg']->get_gallery_images( $num , $size_name, $get, $check_dupes );
 				if ( $this->p->util->is_maxed( $og_ret, $num ) )
 					return $og_ret;
 			}

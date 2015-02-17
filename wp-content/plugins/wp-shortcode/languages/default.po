@@ -3,16 +3,17 @@ msgstr ""
 "Project-Id-Version: WP Shortcode\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-04-17 10:16+0100\n"
-"PO-Revision-Date: 2014-04-17 10:16+0100\n"
-"Last-Translator: BalazsP <ppbb@freemail.hu>\n"
+"PO-Revision-Date: 2015-01-23 22:40+0530\n"
+"Last-Translator: MyThemeShop <support-team@mythemeshop.com>\n"
 "Language-Team: MyThemeShop\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-KeywordsList: _;gettext;gettext_noop;__;_e\n"
-"X-Poedit-Basepath: C:\\wamp\\www\\wpbeta\\wp-content\\plugins\\wp-shortcode\\languages\n"
-"X-Poedit-Language: English\n"
-"X-Poedit-Country: UNITED STATES\n"
+"X-Poedit-Basepath: C:\\wamp\\www\\wpbeta\\wp-content\\plugins\\wp-shortcode"
+"\\languages\n"
+"Language: en_US\n"
+"X-Generator: Poedit 1.6.2\n"
 "X-Poedit-SearchPath-0: ..\n"
 
 #: ../wp-shortcode.php:367
@@ -43,17 +44,16 @@ msgstr ""
 msgid "Brown Button"
 msgstr ""
 
-#: ../tinymce/shortcodes.php:11
-#: ../tinymce/shortcodes.php:22
-#: ../tinymce/shortcodes.php:33
-#: ../tinymce/shortcodes.php:44
-#: ../tinymce/shortcodes.php:55
-#: ../tinymce/shortcodes.php:66
+#: ../tinymce/shortcodes.php:11 ../tinymce/shortcodes.php:22
+#: ../tinymce/shortcodes.php:33 ../tinymce/shortcodes.php:44
+#: ../tinymce/shortcodes.php:55 ../tinymce/shortcodes.php:66
 msgid "Button text"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:12
-msgid "Inserts a brown button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a brown button. Set target to <strong>_blank</strong> to open link "
+"in a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:21
@@ -61,7 +61,9 @@ msgid "Blue Button"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:23
-msgid "Inserts a blue button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a blue button. Set target to <strong>_blank</strong> to open link in "
+"a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:32
@@ -69,7 +71,9 @@ msgid "Green Button"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:34
-msgid "Inserts a green button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a green button. Set target to <strong>_blank</strong> to open link "
+"in a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:43
@@ -77,7 +81,9 @@ msgid "Yellow Button"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:45
-msgid "Inserts a yellow button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a yellow button. Set target to <strong>_blank</strong> to open link "
+"in a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:54
@@ -85,7 +91,9 @@ msgid "Red Button"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:56
-msgid "Inserts a red button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a red button. Set target to <strong>_blank</strong> to open link in "
+"a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:65
@@ -93,7 +101,9 @@ msgid "White Button"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:67
-msgid "Inserts a white button. Set target to <strong>_blank</strong> to open link in a new window."
+msgid ""
+"Inserts a white button. Set target to <strong>_blank</strong> to open link "
+"in a new window."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:72
@@ -208,61 +218,43 @@ msgid "Clear"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:168
-msgid "Clear shortcode can be used to clear an element of its neighbors, no floating elements are allowed on the left or the right side."
+msgid ""
+"Clear shortcode can be used to clear an element of its neighbors, no "
+"floating elements are allowed on the left or the right side."
 msgstr ""
 
 #: ../tinymce/shortcodes.php:176
 msgid "One Third"
 msgstr ""
 
-#: ../tinymce/shortcodes.php:177
-#: ../tinymce/shortcodes.php:185
-#: ../tinymce/shortcodes.php:193
-#: ../tinymce/shortcodes.php:201
-#: ../tinymce/shortcodes.php:209
-#: ../tinymce/shortcodes.php:217
-#: ../tinymce/shortcodes.php:225
-#: ../tinymce/shortcodes.php:233
-#: ../tinymce/shortcodes.php:241
-#: ../tinymce/shortcodes.php:249
-#: ../tinymce/shortcodes.php:257
-#: ../tinymce/shortcodes.php:265
-#: ../tinymce/shortcodes.php:273
-#: ../tinymce/shortcodes.php:281
-#: ../tinymce/shortcodes.php:289
-#: ../tinymce/shortcodes.php:297
-#: ../tinymce/shortcodes.php:305
-#: ../tinymce/shortcodes.php:313
-#: ../tinymce/shortcodes.php:321
-#: ../tinymce/shortcodes.php:329
-#: ../tinymce/shortcodes.php:337
-#: ../tinymce/shortcodes.php:345
+#: ../tinymce/shortcodes.php:177 ../tinymce/shortcodes.php:185
+#: ../tinymce/shortcodes.php:193 ../tinymce/shortcodes.php:201
+#: ../tinymce/shortcodes.php:209 ../tinymce/shortcodes.php:217
+#: ../tinymce/shortcodes.php:225 ../tinymce/shortcodes.php:233
+#: ../tinymce/shortcodes.php:241 ../tinymce/shortcodes.php:249
+#: ../tinymce/shortcodes.php:257 ../tinymce/shortcodes.php:265
+#: ../tinymce/shortcodes.php:273 ../tinymce/shortcodes.php:281
+#: ../tinymce/shortcodes.php:289 ../tinymce/shortcodes.php:297
+#: ../tinymce/shortcodes.php:305 ../tinymce/shortcodes.php:313
+#: ../tinymce/shortcodes.php:321 ../tinymce/shortcodes.php:329
+#: ../tinymce/shortcodes.php:337 ../tinymce/shortcodes.php:345
 msgid "Column content"
 msgstr ""
 
-#: ../tinymce/shortcodes.php:179
-#: ../tinymce/shortcodes.php:187
-#: ../tinymce/shortcodes.php:195
-#: ../tinymce/shortcodes.php:203
-#: ../tinymce/shortcodes.php:211
-#: ../tinymce/shortcodes.php:219
-#: ../tinymce/shortcodes.php:227
-#: ../tinymce/shortcodes.php:235
-#: ../tinymce/shortcodes.php:243
-#: ../tinymce/shortcodes.php:251
-#: ../tinymce/shortcodes.php:259
-#: ../tinymce/shortcodes.php:267
-#: ../tinymce/shortcodes.php:275
-#: ../tinymce/shortcodes.php:283
-#: ../tinymce/shortcodes.php:291
-#: ../tinymce/shortcodes.php:299
-#: ../tinymce/shortcodes.php:307
-#: ../tinymce/shortcodes.php:315
-#: ../tinymce/shortcodes.php:323
-#: ../tinymce/shortcodes.php:331
-#: ../tinymce/shortcodes.php:339
-#: ../tinymce/shortcodes.php:347
-msgid "Use column shortcodes in conjunction with their <em>(Last)</em> version, eg. <br /><strong>One Third + One Third + One Third (Last)</strong>"
+#: ../tinymce/shortcodes.php:179 ../tinymce/shortcodes.php:187
+#: ../tinymce/shortcodes.php:195 ../tinymce/shortcodes.php:203
+#: ../tinymce/shortcodes.php:211 ../tinymce/shortcodes.php:219
+#: ../tinymce/shortcodes.php:227 ../tinymce/shortcodes.php:235
+#: ../tinymce/shortcodes.php:243 ../tinymce/shortcodes.php:251
+#: ../tinymce/shortcodes.php:259 ../tinymce/shortcodes.php:267
+#: ../tinymce/shortcodes.php:275 ../tinymce/shortcodes.php:283
+#: ../tinymce/shortcodes.php:291 ../tinymce/shortcodes.php:299
+#: ../tinymce/shortcodes.php:307 ../tinymce/shortcodes.php:315
+#: ../tinymce/shortcodes.php:323 ../tinymce/shortcodes.php:331
+#: ../tinymce/shortcodes.php:339 ../tinymce/shortcodes.php:347
+msgid ""
+"Use column shortcodes in conjunction with their <em>(Last)</em> version, eg. "
+"<br /><strong>One Third + One Third + One Third (Last)</strong>"
 msgstr ""
 
 #: ../tinymce/shortcodes.php:184
@@ -348,4 +340,3 @@ msgstr ""
 #: ../tinymce/shortcodes.php:344
 msgid "Five Sixth (Last)"
 msgstr ""
-

@@ -160,6 +160,8 @@
             
             if( taxonomy_edit_box.find('.wpuxss-eml-parent_item').val() == '' )
                 taxonomy_edit_box.find('.wpuxss-eml-parent_item').val(wpuxss_eml_i18n_data.parent+' '+$(this).val());
+                
+            taxonomy_edit_box.find('.wpuxss-eml-taxonomy-name').val(taxonomy_name);
             
             taxonomy_edit_box.find('.wpuxss-eml-hierarchical').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][hierarchical]');
             taxonomy_edit_box.find('.wpuxss-eml-public').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][public]');

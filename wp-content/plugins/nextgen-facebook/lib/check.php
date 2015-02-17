@@ -13,8 +13,8 @@ if ( ! class_exists( 'NgfbCheck' ) ) {
 	class NgfbCheck {
 
 		private $p;
-		private $active_plugins;
-		private $network_plugins;
+		private $active_plugins = array();
+		private $network_plugins = array();
 		private static $mac = array(
 			'seo' => array(
 				'seou' => 'SEO Ultimate',
@@ -74,34 +74,39 @@ if ( ! class_exists( 'NgfbCheck' ) ) {
 			return $this->active_plugins;
 		}
 
+		private function get_avail_check( $key ) {
+			switch ( $key ) {
+				case 'aop':
+					return ( ! defined( 'NGFB_PRO_MODULE_DISABLE' ) ||
+					( defined( 'NGFB_PRO_MODULE_DISABLE' ) && ! NGFB_PRO_MODULE_DISABLE ) ) &&
+					file_exists( NGFB_PLUGINDIR.'lib/pro/head/twittercard.php' ) ? true : false;
+					break;
+				case 'mt':
+				case 'metatags':
+					return ( ! defined( 'NGFB_META_TAGS_DISABLE' ) || 
+					( defined( 'NGFB_META_TAGS_DISABLE' ) && ! NGFB_META_TAGS_DISABLE ) ) &&
+					empty( $_SERVER['NGFB_META_TAGS_DISABLE'] ) &&
+					empty( $_GET['NGFB_META_TAGS_DISABLE'] ) ? true : false;	// allow meta tags to be disabled with query argument
+					break;
+				case 'ssb':
+					return ( ! defined( 'NGFB_SOCIAL_SHARING_DISABLE' ) || 
+					( defined( 'NGFB_SOCIAL_SHARING_DISABLE' ) && ! NGFB_SOCIAL_SHARING_DISABLE ) ) &&
+					empty( $_SERVER['NGFB_SOCIAL_SHARING_DISABLE'] ) &&
+					file_exists( NGFB_PLUGINDIR.'lib/sharing.php' ) &&
+					class_exists( $this->p->cf['lca'].'sharing' ) ? true : false;
+					break;
+			}
+		}
+
 		public function get_avail() {
 			$ret = array();
 
 			$ret['curl'] = function_exists( 'curl_init' ) ? true : false;
-
 			$ret['mbdecnum'] = function_exists( 'mb_decode_numericentity' ) ? true : false;
-
 			$ret['postthumb'] = function_exists( 'has_post_thumbnail' ) ? true : false;
-
-			$ret['metatags'] = ( ! defined( 'NGFB_META_TAGS_DISABLE' ) || 
-				( defined( 'NGFB_META_TAGS_DISABLE' ) && ! NGFB_META_TAGS_DISABLE ) ) &&
-				empty( $_SERVER['NGFB_META_TAGS_DISABLE'] ) ? true : false;
-
-			$ret['opengraph'] = ( ! defined( 'NGFB_OPEN_GRAPH_DISABLE' ) || 
-				( defined( 'NGFB_OPEN_GRAPH_DISABLE' ) && ! NGFB_OPEN_GRAPH_DISABLE ) ) &&
-				empty( $_SERVER['NGFB_OPEN_GRAPH_DISABLE'] ) &&
-				file_exists( NGFB_PLUGINDIR.'lib/opengraph.php' ) &&
-				class_exists( $this->p->cf['lca'].'opengraph' ) ? true : false;
-
-			$ret['aop'] = ( ! defined( 'NGFB_PRO_ADDON_DISABLE' ) ||
-				( defined( 'NGFB_PRO_ADDON_DISABLE' ) && ! NGFB_PRO_ADDON_DISABLE ) ) &&
-				file_exists( NGFB_PLUGINDIR.'lib/pro/head/twittercard.php' ) ? true : false;
-
-			$ret['ssb'] = ( ! defined( 'NGFB_SOCIAL_SHARING_DISABLE' ) || 
-				( defined( 'NGFB_SOCIAL_SHARING_DISABLE' ) && ! NGFB_SOCIAL_SHARING_DISABLE ) ) &&
-				empty( $_SERVER['NGFB_SOCIAL_SHARING_DISABLE'] ) &&
-				file_exists( NGFB_PLUGINDIR.'lib/sharing.php' ) &&
-				class_exists( $this->p->cf['lca'].'sharing' ) ? true : false;
+			$ret['metatags'] = $this->get_avail_check( 'mt' );
+			$ret['aop'] = $this->get_avail_check( 'aop' );
+			$ret['ssb'] = $this->get_avail_check( 'ssb' );
 
 			foreach ( $this->p->cf['cache'] as $name => $val ) {
 				$constant_name = 'NGFB_'.strtoupper( $name ).'_CACHE_DISABLE';
@@ -338,8 +343,8 @@ if ( ! class_exists( 'NgfbCheck' ) ) {
 					 __( 'JetPack Photon cripples the WordPress image size functions.', NGFB_TEXTDOM ).'</strong> '.
 					sprintf( __( 'Please <a href="%s">disable JetPack Photon</a> or disable the %s Free version plugin.', NGFB_TEXTDOM ),
 						get_admin_url( null, 'admin.php?page=jetpack' ), $short ).' '.
-					sprintf( __( 'You may also upgrade to the <a href="%s">%s version</a>, which includes an <a href="%s">addon for JetPack Photon</a>.', NGFB_TEXTDOM ), 
-						$purchase_url, $short_pro, 'http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/jetpack-photon/' ) );
+					sprintf( __( 'You may also upgrade to the <a href="%s">%s version</a>, which includes a <a href="%s">module for JetPack Photon</a>.', NGFB_TEXTDOM ), 
+						$purchase_url, $short_pro, 'http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/jetpack-photon/' ) );
 			}
 
 			/*
@@ -353,8 +358,8 @@ if ( ! class_exists( 'NgfbCheck' ) ) {
 					__( 'WooCommerce does not include shortcode support in the admin interface.', NGFB_TEXTDOM ).'</strong> '.
 					sprintf( __( 'Please uncheck the \'<em>Apply Content Filters</em>\' option on the <a href="%s">%s Advanced settings page</a>.', NGFB_TEXTDOM ),  
 						$this->p->util->get_admin_url( 'advanced' ), $this->p->cf['menu'] ).' '.
-					sprintf( __( 'You may also upgrade to the <a href="%s">%s version</a>, which includes an <a href="%s">addon for WooCommerce</a>.', NGFB_TEXTDOM ), 
-						$purchase_url, $short_pro, 'http://surniaulula.com/codex/plugins/nextgen-facebook/notes/addons/woocommerce/' ) );
+					sprintf( __( 'You may also upgrade to the <a href="%s">%s version</a>, which includes a <a href="%s">modules for WooCommerce</a>.', NGFB_TEXTDOM ), 
+						$purchase_url, $short_pro, 'http://surniaulula.com/codex/plugins/nextgen-facebook/notes/modules/woocommerce/' ) );
 			}
 
 			// WooCommerce ShareYourCart Extension
@@ -400,12 +405,17 @@ if ( ! class_exists( 'NgfbCheck' ) ) {
 			}
 		}
 
-		public function is_aop( $lca = '' ) { return $this->aop( $lca ); }
+		public function is_aop( $lca = '' ) { 
+			return $this->aop( $lca );
+		}
 
 		public function aop( $lca = '', $active = true ) {
-			$lca = empty( $lca ) ? $this->p->cf['lca'] : $lca;
+			$lca = empty( $lca ) ? 
+				$this->p->cf['lca'] : $lca;
 			$uca = strtoupper( $lca );
-			$installed = ( $this->p->is_avail['aop'] && defined( $uca.'_PLUGINDIR' ) &&
+			$available = isset( $this->p->is_avail['aop'] ) ? 
+				$this->p->is_avail['aop'] : $this->get_avail_check( 'aop' );
+			$installed = ( $available && defined( $uca.'_PLUGINDIR' ) &&
 				is_dir( constant( $uca.'_PLUGINDIR' ).'lib/pro/' ) ) ? true : false;
 			return $active === true ? ( ( ! empty( $this->p->options['plugin_'.$lca.'_tid'] ) && 
 				$installed && class_exists( 'SucomUpdate' ) &&

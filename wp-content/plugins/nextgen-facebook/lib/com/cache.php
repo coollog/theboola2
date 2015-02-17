@@ -66,8 +66,7 @@ if ( ! class_exists( 'SucomCache' ) ) {
 			$url_frag = parse_url( $url, PHP_URL_FRAGMENT );
 			if ( ! empty( $url_frag ) ) 
 				$url_frag = '#'.$url_frag;
-
-			$cache_salt = __CLASS__.'(get:'.$get_url.')';
+			$cache_salt = __METHOD__.'(url:'.$get_url.')';
 			$cache_id = md5( $cache_salt );		// no lca prefix on filenames
 			$cache_file = $this->base_dir.$cache_id.$url_ext;
 			$cache_url = $this->base_url.$cache_id.$url_ext.$url_frag;
@@ -162,8 +161,9 @@ if ( ! class_exists( 'SucomCache' ) ) {
 			if ( $http_code == 200 ) {
 				if ( empty( $cache_data ) )
 					$this->p->debug->log( 'cache_data returned from "'.$get_url.'" is empty' );
-				elseif ( $this->save_cache_data( $cache_salt, $cache_data, $cache_name, $url_ext, $expire_secs ) == true )
-					$this->p->debug->log( 'cache_data sucessfully saved' );
+				elseif ( $this->save_cache_data( $cache_salt, 
+					$cache_data, $cache_name, $url_ext, $expire_secs ) == true )
+						$this->p->debug->log( 'cache_data sucessfully saved' );
 				switch ( $return ) {
 					case 'raw': return $cache_data; break;
 					case 'url': return $cache_url; break;
@@ -172,10 +172,14 @@ if ( ! class_exists( 'SucomCache' ) ) {
 				}
 			} else {
 				if ( is_admin() )
-					$this->p->notice->err( 'Error connecting to <a href="'.$get_url.'" target="_blank">'.$get_url.'</a> for caching. 
-						Ignoring requests to cache this URL for '.$this->ignore_time.' second(s).', true );
-				$this->p->debug->log( 'error connecting to URL '.$get_url.' for caching. ' );
-				$this->p->debug->log( 'ignoring requests to cache this URL for '.$this->ignore_time.' second(s)' );
+					$this->p->notice->err( 'Error connecting to <a href="'.$get_url.'" target="_blank">'.
+						$get_url.'</a> for caching (HTTP code '.$http_code.').'.
+						' Ignoring requests to cache this URL for '.$this->ignore_time.
+						' second(s).', true );
+				$this->p->debug->log( 'error connecting to URL '.$get_url.
+					' for caching (http code '.$http_code.')' );
+				$this->p->debug->log( 'ignoring requests to cache this URL for '.
+					$this->ignore_time.' second(s)' );
 				$this->ignore_urls[$get_url] = time();
 				$cache_salt = __CLASS__.'(ignore_urls)';
 				$cache_id = $this->p->cf['lca'].'_'.md5( $cache_salt );

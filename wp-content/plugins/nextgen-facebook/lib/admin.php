@@ -38,8 +38,6 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				add_action( 'network_admin_edit_'.NGFB_SITE_OPTIONS_NAME, array( &$this, 'save_site_options' ) );
 				add_filter( 'network_admin_plugin_action_links', array( &$this, 'add_plugin_action_links' ), 10, 2 );
 			}
-
-			add_image_size( $this->p->cf['lca'].'-preview', 600, 315, true );	// social preview tab background image
 		}
 
 		// load all submenu classes into the $this->submenu array
@@ -215,7 +213,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				key( $this->p->cf['*']['lib']['sitesubmenu'] ) : $_POST['page'];
 
 			if ( empty( $_POST[ NGFB_NONCE ] ) ) {
-				$this->p->debug->log( 'Nonce token validation post field missing.' );
+				$this->p->debug->log( 'nonce token validation post field missing' );
 				wp_redirect( $this->p->util->get_admin_url( $page ) );
 				exit;
 			} elseif ( ! wp_verify_nonce( $_POST[ NGFB_NONCE ], $this->get_nonce() ) ) {
@@ -252,11 +250,11 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		public function load_form_page() {
 			wp_enqueue_script( 'postbox' );
 			$upload_dir = wp_upload_dir();	// returns assoc array with path info
-			$user_opts = $this->p->addons['util']['user']->get_options();
+			$user_opts = $this->p->mods['util']['user']->get_options();
 
 			if ( ! empty( $_GET['action'] ) ) {
 				if ( empty( $_GET[ NGFB_NONCE ] ) )
-					$this->p->debug->log( 'Nonce token validation query field missing.' );
+					$this->p->debug->log( 'nonce token validation query field missing' );
 				elseif ( ! wp_verify_nonce( $_GET[ NGFB_NONCE ], $this->get_nonce() ) )
 					$this->p->notice->err( __( 'Nonce token validation failed for plugin action (action ignored).', NGFB_TEXTDOM ) );
 				else {
@@ -273,9 +271,9 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 							$deleted_transient = $this->p->util->delete_expired_transients( true );
 							wp_cache_flush();
 
-							if ( function_exists('w3tc_pgcache_flush') ) 
+							if ( function_exists( 'w3tc_pgcache_flush' ) ) 		// w3 total cache
 								w3tc_pgcache_flush();
-							elseif ( function_exists('wp_cache_clear_cache') ) 
+							elseif ( function_exists( 'wp_cache_clear_cache' ) )	// wp super cache
 								wp_cache_clear_cache();
 
 							$this->p->notice->inf( __( 'Cached files, WP object cache, transient cache, and any additional caches, '.
@@ -306,7 +304,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 					array( &$this, 'show_metabox_purchase' ), $this->pagehook, 'side' );
 				add_filter( 'postbox_classes_'.$this->pagehook.'_'.$this->pagehook.'_purchase', 
 					array( &$this, 'add_class_postbox_highlight_side' ) );
-				$this->p->addons['util']['user']->reset_metabox_prefs( $this->pagehook, array( 'purchase' ), null, 'side', true );
+				$this->p->mods['util']['user']->reset_metabox_prefs( $this->pagehook, array( 'purchase' ), null, 'side', true );
 			}
 
 			add_meta_box( $this->pagehook.'_help', __( 'Help and Support', NGFB_TEXTDOM ), 
@@ -556,7 +554,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 						$features[$name] = array( 
 							'status' => class_exists( $lca.'pro'.$sub.$id ) ? ( $aop ? 'on' : $off ) : $off,
 							'tooltip' => 'If the '.$name.' plugin is detected, '.$this->p->cf['plugin'][$lca]['short'].' Pro '.
-								'will load an integration addon to provide additional support and features for '.$name.'.',
+								'will load an integration modules to provide additional support and features for '.$name.'.',
 							'td_class' => $aop ? '' : 'blank',
 						);
 					}

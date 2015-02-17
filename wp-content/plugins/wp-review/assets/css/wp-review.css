@@ -171,7 +171,6 @@
   .review-desc { padding: 4%; width: 100%; }
   .review-total-wrapper { width: 100%; margin-right: 0; }
   .review-total-wrapper span.review-total-box { padding: 10px 0 20px; text-align: left; padding-left: 10px; }
-  .review-total-star { position: absolute; right: 20px; top: 5px; }
   .user-total-wrapper { width: 96% }
   .review-total-star.allowed-to-rate { position: relative; right: auto; left: 0; float: left; }
 }

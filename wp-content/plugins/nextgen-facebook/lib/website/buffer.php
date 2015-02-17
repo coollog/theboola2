@@ -38,9 +38,7 @@ if ( ! class_exists( 'NgfbSubmenuSharingBuffer' ) && class_exists( 'NgfbSubmenuS
 			'horizontal' => 'Horizontal', 'vertical' => 'Vertical' ) ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Image Dimensions', 'short' ).
-			'<td>Width '.$this->form->get_input( 'buffer_img_width', 'short' ).' x '.
-			'Height '.$this->form->get_input( 'buffer_img_height', 'short' ).' &nbsp; '.
-			'Crop '.$this->form->get_checkbox( 'buffer_img_crop' ).'</td>';
+			'<td>'.$this->form->get_image_dimensions_input( 'buffer_img', false, true, $this->p->options['plugin_display'] ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Tweet Text Source', 'short' ).'<td>'.
 			$this->form->get_select( 'buffer_caption', $this->p->cf['form']['caption_types'] ).'</td>';
@@ -80,6 +78,8 @@ if ( ! class_exists( 'NgfbSharingBuffer' ) ) {
 					'buffer_img_width' => 800,
 					'buffer_img_height' => 800,
 					'buffer_img_crop' => 1,
+					'buffer_img_crop_x' => 'center',
+					'buffer_img_crop_y' => 'center',
 					'buffer_caption' => 'title',
 					'buffer_cap_len' => 140,
 					'buffer_via' => 1,
@@ -98,7 +98,7 @@ if ( ! class_exists( 'NgfbSharingBuffer' ) ) {
 		}
 
 		public function filter_plugin_image_sizes( $sizes ) {
-			$sizes['buffer_img'] = array( 'name' => 'buffer', 'label' => 'Buffer Button Image Dimensions' );
+			$sizes['buffer_img'] = array( 'name' => 'buffer-button', 'label' => 'Buffer Button Image Dimensions' );
 			return $sizes;
 		}
 
@@ -130,15 +130,18 @@ if ( ! class_exists( 'NgfbSharingBuffer' ) ) {
 			}
 
 			if ( empty( $atts['size'] ) ) 
-				$atts['size'] = $this->p->cf['lca'].'-buffer';
+				$atts['size'] = $this->p->cf['lca'].'-buffer-button';
 
 			if ( empty( $atts['photo'] ) ) {
 				if ( empty( $atts['pid'] ) && $post_id > 0 ) {
 					// check for meta, featured, and attached images
-					$pid = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_img_id' );
-					$pre = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_img_id_pre' );
+					$pid = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_img_id' );
+					$pre = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_img_id_pre' );
 					if ( ! empty( $pid ) )
 						$atts['pid'] = $pre == 'ngg' ? 'ngg-'.$pid : $pid;
+					elseif ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) &&
+						wp_attachment_is_image( $post_id ) )
+							$atts['pid'] = $post_id;
 					elseif ( $this->p->is_avail['postthumb'] == true && has_post_thumbnail( $post_id ) )
 						$atts['pid'] = get_post_thumbnail_id( $post_id );
 					else $atts['pid'] = $this->p->media->get_first_attached_image_id( $post_id );

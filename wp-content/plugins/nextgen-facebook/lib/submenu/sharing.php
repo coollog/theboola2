@@ -42,9 +42,6 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 						case ( strpos( $idx, 'tooltip-buttons_pos_' ) === false ? false : true ):
 							$text = 'Individual social sharing button(s) must also be enabled below.';
 							break;
-						case 'tooltip-buttons_pos_excerpt':
-							$text = 'Individual social sharing button(s) must also be enabled below.';
-							break;
 						case 'tooltip-buttons_on_index':
 							$text = 'Add the following social sharing buttons to each entry of an index webpage (<strong>non-static</strong> 
 							homepage, category, archive, etc.). By Default, social sharing buttons are <em>not</em> included on index webpages 
@@ -121,7 +118,7 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 
 			// these metabox ids should be closed by default (array_diff() selects everything except those listed)
 			$ids = array_diff( array_keys( $this->p->cf['plugin']['ngfb']['lib']['website'] ), array( 'facebook', 'gplus', 'twitter' ) );
-			$this->p->addons['util']['user']->reset_metabox_prefs( $this->pagehook, $ids, 'closed' );
+			$this->p->mods['util']['user']->reset_metabox_prefs( $this->pagehook, $ids, 'closed' );
 		}
 
 		public function add_class_postbox_website( $classes ) {

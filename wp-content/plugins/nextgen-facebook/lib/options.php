@@ -103,7 +103,8 @@ if ( ! class_exists( 'NgfbOptions' ) ) {
 					} else $this->save_options( $options_name, $opts );
 				}
 
-				$opts['add_meta_name_generator'] = 1;
+				$opts['add_meta_name_generator'] = ( defined( 'NGFB_META_GENERATOR_DISABLE' ) && 
+					NGFB_META_GENERATOR_DISABLE ) ? 0 : 1;
 
 				if ( ! empty( $this->p->is_avail['seo']['*'] ) &&
 					isset( $opts['add_meta_name_description'] ) ) {
@@ -142,14 +143,14 @@ if ( ! class_exists( 'NgfbOptions' ) ) {
 				if ( $options_name == NGFB_OPTIONS_NAME ) {
 					if ( $this->p->check->aop() &&
 						! empty( $this->p->is_avail['ecom']['*'] ) &&
-						$opts['tc_prod_def_l2'] === $this->p->cf['opt']['defaults']['tc_prod_def_l2'] &&
-						$opts['tc_prod_def_d2'] === $this->p->cf['opt']['defaults']['tc_prod_def_d2'] ) {
+						$opts['tc_prod_def_label2'] === $this->p->cf['opt']['defaults']['tc_prod_def_label2'] &&
+						$opts['tc_prod_def_data2'] === $this->p->cf['opt']['defaults']['tc_prod_def_data2'] ) {
 	
 						$this->p->notice->inf( 'An eCommerce plugin has been detected. Please update Twitter\'s
-							<em>Product Card Default 2nd Attribute</em> option values on the '.
+							<em>Product Card Default 2nd Label</em> option values on the '.
 							$this->p->util->get_admin_url( 'general#sucom-tab_pub_twitter', 'General settings page' ). ' 
-							(to something else than \''.$this->p->cf['opt']['defaults']['tc_prod_def_l2'].
-							'\' and \''.$this->p->cf['opt']['defaults']['tc_prod_def_d2'].'\').' );
+							(to something else than \''.$this->p->cf['opt']['defaults']['tc_prod_def_label2'].
+							'\' and \''.$this->p->cf['opt']['defaults']['tc_prod_def_data2'].'\').' );
 					}
 				}
 				if ( $this->p->is_avail['aop'] === true && empty( $this->p->options['plugin_'.$this->p->cf['lca'].'_tid'] ) && 

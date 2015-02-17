@@ -91,10 +91,16 @@ class anspress {
 	}
 	
 	public function wp_head(){
-		if(is_question()){
-			global $wp;
-			echo '<link href="'.home_url(add_query_arg(array(),$wp->request)).'" title="'.wp_title( '|', false, 'right' ).'" type="application/rss+xml" rel="alternate">';
-			echo '<link rel="canonical" href="'.get_permalink(get_question_id()).'"> ';
+		if(is_anspress()){
+			$q_feed = get_post_type_archive_feed_link( 'question' );
+			$a_feed = get_post_type_archive_feed_link( 'answer' );
+			echo '<link rel="alternate" type="application/rss+xml" title="'.__('Question feed', 'ap').'" href="'.$q_feed.'" />';
+			echo '<link rel="alternate" type="application/rss+xml" title="'.__('Answers feed', 'ap').'" href="'.$a_feed.'" />';
+		}	
+		
+		if(is_question()){	
+			echo '<link rel="canonical" href="'.get_permalink(get_question_id()).'">';
+			echo '<link rel="shortlink" href="'.wp_get_shortlink(get_question_id()).'" />';
 		}
 	}
 
@@ -340,6 +346,9 @@ class anspress {
 			
 			if('http://ANSPRESS_USERS_PAGE_URL' == $item->url)
 				$item->url = ap_get_link_to('users');
+			
+			if('http://ANSPRESS_USER_PROFILE_URL' == $item->url)
+				$item->url = ap_user_link(get_current_user_id());
 		}
 
 		return $items;

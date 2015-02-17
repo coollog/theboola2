@@ -345,6 +345,21 @@ $shortcodes = array(
         "content" => __("Column content", "wpshortcode"),
         "content_field" => "textarea",
         "description" => __("Use column shortcodes in conjunction with their <em>(Last)</em> version, eg. <br /><strong>One Third + One Third + One Third (Last)</strong>", "wpshortcode")
+    ),
+    "tooltip" => array(
+        "self-closing" => false,
+        "atts" => array(
+            "content" => __("Tooltip content", "wpshortcode"),
+            "direction" => "n",
+            "fade" => "0"
+        ),
+        "att_labels" => array(
+            "content" => __("Tooltip content", "wpshortcode"),
+            "direction" => __("Direction (cardinal)", "wpshortcode"),
+        ),
+        "label" => __("Tooltip", "wpshortcode"),
+        "content" => __("Trigger text", "wpshortcode"),
+        "description" => __("Add a tooltip that appears on hover. Possible values for direction: nw | n | ne | w | e | sw | s | se", "wpshortcode")
     )
 );
 echo "<script type=\"text/javascript\">var shortcodes = ".json_encode($shortcodes).";</script>";

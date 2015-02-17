@@ -8,27 +8,14 @@ Copyright 2012-2014 - Jean-Sebastien Morisset - http://surniaulula.com/
 if ( ! defined( 'ABSPATH' ) ) 
 	die( 'These aren\'t the droids you\'re looking for...' );
 
-if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
+if ( ! class_exists( 'NgfbOpengraph' ) ) {
 
-	class NgfbOpengraph extends SucomOpengraph {
-
-		protected $meta_pre = '';
-		protected $size_name = '';
+	class NgfbOpengraph {
 
 		public function __construct( &$plugin ) {
 			$this->p =& $plugin;
-			switch ( SucomUtil::crawler_name() ) {
-				case 'pinterest':
-					$this->meta_pre = 'rp';
-					$this->size_name = $this->p->cf['lca'].'-richpin';
-					break;
-				default:
-					$this->meta_pre = 'og';
-					$this->size_name = $this->p->cf['lca'].'-opengraph';
-					break;
-			}
 			$this->p->util->add_plugin_filters( $this, array( 'plugin_image_sizes' => 1 ) );
-			add_filter( 'language_attributes', array( &$this, 'add_doctype' ) );
+			add_filter( 'language_attributes', array( &$this, 'add_doctype' ), 100, 1 );
 		}
 
 		public function filter_plugin_image_sizes( $sizes ) {
@@ -142,7 +129,7 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 	
 					$og['og:type'] = 'article';
 					if ( ! isset( $og['article:author'] ) )
-						$og['article:author'] = $this->p->addons['util']['user']->get_article_author( $this->p->options['og_def_author_id'] );
+						$og['article:author'] = $this->p->mods['util']['user']->get_article_author( $this->p->options['og_def_author_id'] );
 
 				// default for everything else is 'website'
 				} else $og['og:type'] = 'website';
@@ -156,9 +143,9 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 				if ( ! isset( $og['article:author'] ) ) {
 					if ( is_singular() || $use_post !== false ) {
 						if ( ! empty( $obj->post_author ) )
-							$og['article:author'] = $this->p->addons['util']['user']->get_article_author( $obj->post_author );
+							$og['article:author'] = $this->p->mods['util']['user']->get_article_author( $obj->post_author );
 						elseif ( ! empty( $this->p->options['og_def_author_id'] ) )
-							$og['article:author'] = $this->p->addons['util']['user']->get_article_author( $this->p->options['og_def_author_id'] );
+							$og['article:author'] = $this->p->mods['util']['user']->get_article_author( $this->p->options['og_def_author_id'] );
 					}
 				}
 
@@ -202,12 +189,34 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 				if ( empty( $og_max['og_img_max'] ) ) 
 					$this->p->debug->log( 'images disabled: maximum images = 0' );
 				else {
-					$og['og:image'] = $this->get_all_images( $og_max['og_img_max'], $this->size_name, $post_id, true, $this->meta_pre );
+					if ( is_admin() ) {
+						$img_sizes = array (
+							'rp' => $this->p->cf['lca'].'-richpin',
+							'og' => $this->p->cf['lca'].'-opengraph',	// must be last for meta tags preview
+						);
+					} else {
+						switch ( SucomUtil::crawler_name() ) {
+							case 'pinterest':
+								$img_sizes = array (
+									'rp' => $this->p->cf['lca'].'-richpin'
+								);
+								break;
+							default:
+								$img_sizes = array (
+									'og' => $this->p->cf['lca'].'-opengraph'
+								);
+								break;
+						}
+					}
+					foreach ( $img_sizes as $meta_pre => $size_name ) {
+						$check_dupes = is_admin() && $meta_pre !== 'og' ? false : true;
+						$og['og:image'] = $this->get_all_images( $og_max['og_img_max'], $size_name, $post_id, $check_dupes, $meta_pre );
 
-					// if there's no image, and no video preview image, then add the default image for non-index webpages
-					if ( empty( $og['og:image'] ) && $video_images === 0 &&
-						( is_singular() || $use_post !== false ) )
-							$og['og:image'] = $this->p->media->get_default_image( $og_max['og_img_max'], $this->size_name );
+						// if there's no image, and no video preview image, then add the default image for non-index webpages
+						if ( empty( $og['og:image'] ) && $video_images === 0 &&
+							( is_singular() || $use_post !== false ) )
+								$og['og:image'] = $this->p->media->get_default_image( $og_max['og_img_max'], $size_name );
+					}
 				} 
 			}
 
@@ -246,7 +255,7 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 
 			if ( ! empty( $post_id ) ) {	// post id should be > 0 for post meta
 				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->p->addons['util']['postmeta']->get_og_video( $num_remains, $post_id, $check_dupes, $meta_pre ) );
+				$og_ret = array_merge( $og_ret, $this->p->mods['util']['postmeta']->get_og_video( $num_remains, $post_id, $check_dupes, $meta_pre ) );
 			}
 
 			// if we haven't reached the limit of videos yet, keep going
@@ -259,22 +268,35 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 		}
 
 		public function get_all_images( $num = 0, $size_name = 'thumbnail', $post_id, $check_dupes = true, $meta_pre = 'og' ) {
-			$this->p->debug->args( array( 'num' => $num, 'size_name' => $size_name, 'post_id' => $post_id, 'check_dupes' => $check_dupes, 'meta_pre' => $meta_pre ) );
+			$this->p->debug->args( array(
+				'num' => $num,
+				'size_name' => $size_name,
+				'post_id' => $post_id,
+				'check_dupes' => $check_dupes,
+				'meta_pre' => $meta_pre,
+			) );
 			$og_ret = array();
 
 			// check for an attachment page
-			if ( ! empty( $post_id ) && is_attachment( $post_id ) ) {	// post id should be > 0 for attachment pages
-				$og_image = array();
-				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				$og_image = $this->p->media->get_attachment_image( $num_remains, $size_name, $post_id, $check_dupes );
+			// is_attachment() only works on the front-end, so check the post_type as well
+			if ( ! empty( $post_id ) ) {
+				if ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) &&
+					wp_attachment_is_image( $post_id ) ) {
 
-				// if an attachment is not an image, then use the default image instead
-				if ( empty( $og_ret ) ) {
+					$og_image = array();
 					$num_remains = $this->p->media->num_remains( $og_ret, $num );
-					$og_ret = array_merge( $og_ret, $this->p->media->get_default_image( $num_remains, $size_name, $check_dupes ) );
-				} else $og_ret = array_merge( $og_ret, $og_image );
-
-				return $og_ret;
+					$og_image = $this->p->media->get_attachment_image( $num_remains, 
+						$size_name, $post_id, $check_dupes );
+	
+					// if an attachment is not an image, then use the default image instead
+					if ( empty( $og_image ) ) {
+						$num_remains = $this->p->media->num_remains( $og_ret, $num );
+						$og_ret = array_merge( $og_ret, $this->p->media->get_default_image( $num_remains, 
+							$size_name, $check_dupes ) );
+					} else $og_ret = array_merge( $og_ret, $og_image );
+	
+					return $og_ret;
+				}
 			}
 
 			// check for index webpages with og_def_img_on_index or og_def_img_on_search enabled to force a default image
@@ -284,11 +306,13 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 
 				$this->p->debug->log( 'default image is forced' );
 				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->p->media->get_default_image( $num_remains, $size_name, $check_dupes ) );
+				$og_ret = array_merge( $og_ret, $this->p->media->get_default_image( $num_remains, 
+					$size_name, $check_dupes ) );
 				return $og_ret;	// stop here and return the image array
 			}
 
-			if ( is_author() || ( is_admin() && ( $screen = get_current_screen() ) && ( $screen->id === 'user-edit' || $screen->id === 'profile' ) ) ) {
+			if ( is_author() || ( is_admin() && ( $screen = get_current_screen() ) && 
+				( $screen->id === 'user-edit' || $screen->id === 'profile' ) ) ) {
 				if ( is_admin() )
 					$author_id = empty( $_GET['user_id'] ) ? get_current_user_id() : $_GET['user_id'];
 				else {
@@ -298,29 +322,27 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 					$author_id = $author->ID;
 				}
 				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->p->media->get_author_image( $num_remains, $size_name, $author_id, $check_dupes ) );
+				$og_ret = array_merge( $og_ret, $this->p->media->get_author_image( $num_remains, 
+					$size_name, $author_id, $check_dupes ) );
 			}
 
 			// check for custom meta, featured, or attached image(s)
-			if ( ! empty( $post_id ) ) {	// post id should be > 0
-				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				$og_ret = array_merge( $og_ret, $this->p->media->get_post_images( $num_remains, $size_name, $post_id, $check_dupes, $meta_pre ) );
-
-				// keep going to find more images
-				// the featured / attached image(s) will be listed first in the open graph meta property tags
-				// and duplicates will be filtered out
-			}
+			// allow for empty post_id in order to execute featured/attached image filters for modules
+			$num_remains = $this->p->media->num_remains( $og_ret, $num );
+			$og_ret = array_merge( $og_ret, $this->p->media->get_post_images( $num_remains, 
+				$size_name, $post_id, $check_dupes, $meta_pre ) );
 
 			// check for ngg shortcodes and query vars
 			if ( $this->p->is_avail['media']['ngg'] === true && 
-				! empty( $this->p->addons['media']['ngg'] ) &&
+				! empty( $this->p->mods['media']['ngg'] ) &&
 				! $this->p->util->is_maxed( $og_ret, $num ) ) {
 
 				// ngg pre-v2 used query arguments
 				$ngg_query_og_ret = array();
 				$num_remains = $this->p->media->num_remains( $og_ret, $num );
-				if ( version_compare( $this->p->addons['media']['ngg']->ngg_version, '2.0.0', '<' ) )
-					$ngg_query_og_ret = $this->p->addons['media']['ngg']->get_query_images( $num_remains, $size_name, $check_dupes );
+				if ( version_compare( $this->p->mods['media']['ngg']->ngg_version, '2.0.0', '<' ) )
+					$ngg_query_og_ret = $this->p->mods['media']['ngg']->get_query_images( $num_remains, 
+						$size_name, $check_dupes );
 
 				// if we found images in the query, skip content shortcodes
 				if ( count( $ngg_query_og_ret ) > 0 ) {
@@ -331,7 +353,7 @@ if ( ! class_exists( 'NgfbOpengraph' ) && class_exists( 'SucomOpengraph' ) ) {
 				} elseif ( ! $this->p->util->is_maxed( $og_ret, $num ) ) {
 					$num_remains = $this->p->media->num_remains( $og_ret, $num );
 					$og_ret = array_merge( $og_ret, 
-						$this->p->addons['media']['ngg']->get_shortcode_images( $num_remains, $size_name, $check_dupes ) );
+						$this->p->mods['media']['ngg']->get_shortcode_images( $num_remains, $size_name, $check_dupes ) );
 				}
 			} // end of check for ngg shortcodes and query vars
 

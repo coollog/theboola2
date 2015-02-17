@@ -44,9 +44,9 @@ if ( ! class_exists( 'NgfbSubmenuSharingTumblr' ) && class_exists( 'NgfbSubmenuS
 
 			$rows[] = $this->p->util->th( 'Show Button in', 'short highlight', null,
 			'The Tumblr button shares a <em>custom image ID</em>, a <em>featured</em> image, 
-			or an <em>attached</em> image that is equal to or larger than the \'Image Dimensions\' 
+			or an <em>attached</em> image that is equal to (or larger) than the \'Image Dimensions\' 
 			you have chosen (when the <em>Use Attached Image</em> option is checked), embedded video, 
-			the content of <em>quote</em> custom Posts, or (lastly) the webpage link.' ).'<td>'.
+			the content of <em>quote</em> custom Posts, or the webpage link.' ).'<td>'.
 			( $this->show_on_checkboxes( 'tumblr' ) ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Preferred Order', 'short' ).'<td>'.
@@ -61,13 +61,13 @@ if ( ! class_exists( 'NgfbSubmenuSharingTumblr' ) && class_exists( 'NgfbSubmenuS
 
 			$rows[] = $this->p->util->th( 'Button Style', 'short' ).'<td>'.$buttons_html.'</td>';
 
-			$rows[] = $this->p->util->th( 'Use Attached Image', 'short' ).'<td>'.
-			$this->form->get_checkbox( 'tumblr_photo' ).'</td>';
+			if ( $this->p->options['plugin_display'] == 'all' ) {
+				$rows[] = $this->p->util->th( 'Use Attached as Photo', 'short' ).'<td>'.
+				$this->form->get_checkbox( 'tumblr_photo' ).'</td>';
+			}
 
 			$rows[] = $this->p->util->th( 'Image Dimensions', 'short' ).
-			'<td>Width '.$this->form->get_input( 'tumblr_img_width', 'short' ).' x '.
-			'Height '.$this->form->get_input( 'tumblr_img_height', 'short' ).' &nbsp; '.
-			'Crop '.$this->form->get_checkbox( 'tumblr_img_crop' ).'</td>';
+			'<td>'.$this->form->get_image_dimensions_input( 'tumblr_img', false, true, $this->p->options['plugin_display'] ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Media Caption', 'short' ).'<td>'.
 			$this->form->get_select( 'tumblr_caption', $this->p->cf['form']['caption_types'] ).'</td>';
@@ -103,6 +103,8 @@ if ( ! class_exists( 'NgfbSharingTumblr' ) ) {
 					'tumblr_img_width' => 800,
 					'tumblr_img_height' => 800,
 					'tumblr_img_crop' => 0,
+					'tumblr_img_crop_x' => 'center',
+					'tumblr_img_crop_y' => 'center',
 					'tumblr_caption' => 'both',
 					'tumblr_cap_len' => 400,
 				),
@@ -120,7 +122,7 @@ if ( ! class_exists( 'NgfbSharingTumblr' ) ) {
 		}
 
 		public function filter_plugin_image_sizes( $sizes ) {
-			$sizes['tumblr_img'] = array( 'name' => 'tumblr', 'label' => 'Tumblr Button Image Dimensions' );
+			$sizes['tumblr_img'] = array( 'name' => 'tumblr-button', 'label' => 'Tumblr Button Image Dimensions' );
 			return $sizes;
 		}
 
@@ -152,16 +154,19 @@ if ( ! class_exists( 'NgfbSharingTumblr' ) ) {
 			}
 
 			if ( empty( $atts['size'] ) ) 
-				$atts['size'] = $this->p->cf['lca'].'-tumblr';
+				$atts['size'] = $this->p->cf['lca'].'-tumblr-button';
 
 			// only use an image if the 'tumblr_photo' option allows it
 			if ( empty( $atts['photo'] ) && $opts['tumblr_photo'] ) {
 				if ( empty( $atts['pid'] ) && $post_id > 0 ) {
 					// check for meta, featured, and attached images
-					$pid = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_img_id' );
-					$pre = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_img_id_pre' );
+					$pid = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_img_id' );
+					$pre = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_img_id_pre' );
 					if ( ! empty( $pid ) )
 						$atts['pid'] = $pre == 'ngg' ? 'ngg-'.$pid : $pid;
+					elseif ( ( is_attachment( $post_id ) || get_post_type( $post_id ) === 'attachment' ) &&
+						wp_attachment_is_image( $post_id ) )
+							$atts['pid'] = $post_id;
 					elseif ( $this->p->is_avail['postthumb'] == true && has_post_thumbnail( $post_id ) )
 						$atts['pid'] = get_post_thumbnail_id( $post_id );
 					else $atts['pid'] = $this->p->media->get_first_attached_image_id( $post_id );
@@ -173,7 +178,7 @@ if ( ! class_exists( 'NgfbSharingTumblr' ) ) {
 
 			// check for custom or embedded videos
 			if ( empty( $atts['photo'] ) && empty( $atts['embed'] ) && $post_id > 0 ) {
-				$atts['embed'] = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_vid_url' );
+				$atts['embed'] = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_vid_url' );
 				if ( empty( $atts['embed'] ) ) {
 					$videos = array();
 					$videos = $this->p->media->get_content_videos( 1, $post_id, false );

@@ -96,8 +96,8 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 				}
 				$post_id = empty( $obj->ID ) || empty( $obj->post_type ) ? 0 : $obj->ID;
 				if ( ! empty( $post_id ) && 
-					isset( $this->p->addons['util']['postmeta'] ) ) {
-					$caption = $this->p->addons['util']['postmeta']->get_options( $post_id, $custom );
+					isset( $this->p->mods['util']['postmeta'] ) ) {
+					$caption = $this->p->mods['util']['postmeta']->get_options( $post_id, $custom );
 					if ( ! empty( $caption ) ) 
 						$this->p->debug->log( 'custom postmeta '.$custom.' = "'.$caption.'"' );
 				}
@@ -160,11 +160,11 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 				}
 				$post_id = empty( $obj->ID ) || empty( $obj->post_type ) ? 0 : $obj->ID;
 				if ( ! empty( $post_id ) && ! empty( $custom ) && 
-					isset( $this->p->addons['util']['postmeta'] ) ) {
+					isset( $this->p->mods['util']['postmeta'] ) ) {
 
 					// always fallback to the custom og_title
 					foreach ( array_unique( array( $custom, 'og_title' ) ) as $meta_key ) {
-						$title = $this->p->addons['util']['postmeta']->get_options( $post_id, $meta_key );
+						$title = $this->p->mods['util']['postmeta']->get_options( $post_id, $meta_key );
 						if ( ! empty( $title ) ) {
 							$this->p->debug->log( 'custom postmeta '.$meta_key.' = "'.$title.'"' );
 							break;
@@ -174,8 +174,8 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 			} elseif ( is_author() || ( is_admin() && ( $screen = get_current_screen() ) && ( $screen->id === 'user-edit' || $screen->id === 'profile' ) ) ) {
 				$author = $this->p->util->get_author_object();
 				if ( ! empty( $author->ID ) ) {
-					if ( ! empty( $custom ) && isset( $this->p->addons['util']['user'] ) ) {
-						$title = $this->p->addons['util']['user']->get_options( $author->ID, $custom );
+					if ( ! empty( $custom ) && isset( $this->p->mods['util']['user'] ) ) {
+						$title = $this->p->mods['util']['user']->get_options( $author->ID, $custom );
 						if ( ! empty( $title ) ) 
 							$this->p->debug->log( 'custom user '.$custom.' = "'.$title.'"' );
 					}
@@ -227,7 +227,7 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 					$title = $term->name;
 					$cat_parents = get_category_parents( $term->term_id, false, ' '.$separator.' ', false );
 					if ( is_wp_error( $cat_parents ) )
-						$this->p->debug->log( 'get_category_parents() returned WP_Error object' );
+						$this->p->debug->log( 'get_category_parents error: '.$cat_parents->get_error_message() );
 					else {
 						$this->p->debug->log( 'get_category_parents() = "'.$cat_parents.'"' );
 						if ( ! empty( $cat_parents ) ) {
@@ -318,11 +318,11 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 				}
 				$post_id = empty( $obj->ID ) || empty( $obj->post_type ) ? 0 : $obj->ID;
 				if ( ! empty( $post_id ) && ! empty( $custom ) && 
-					isset( $this->p->addons['util']['postmeta'] ) ) {
+					isset( $this->p->mods['util']['postmeta'] ) ) {
 
 					// always fallback to the custom og_desc
 					foreach ( array_unique( array( $custom, 'og_desc' ) ) as $meta_key ) {
-						$desc = $this->p->addons['util']['postmeta']->get_options( $post_id, $meta_key );
+						$desc = $this->p->mods['util']['postmeta']->get_options( $post_id, $meta_key );
 						if ( ! empty( $desc ) ) {
 							$this->p->debug->log( 'custom postmeta '.$meta_key.' = "'.$desc.'"' );
 							break;
@@ -332,8 +332,8 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 			} elseif ( is_author() || ( is_admin() && ( $screen = get_current_screen() ) && ( $screen->id === 'user-edit' || $screen->id === 'profile' ) ) ) {
 				$author = $this->p->util->get_author_object();
 				if ( ! empty( $author->ID ) ) {
-					if ( isset( $this->p->addons['util']['user'] ) )
-						$desc = $this->p->addons['util']['user']->get_options( $author->ID, $custom );
+					if ( isset( $this->p->mods['util']['user'] ) )
+						$desc = $this->p->mods['util']['user']->get_options( $author->ID, $custom );
 					if ( ! empty( $desc ) ) 
 						$this->p->debug->log( 'custom user '.$custom.' = "'.$desc.'"' );
 					elseif ( is_admin() )	// re-create default description on admin side
@@ -542,10 +542,10 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 			$content = str_replace( ']]>', ']]&gt;', $content );
 
 			$content_strlen_after = strlen( $content );
-			$this->p->debug->log( 'content strlen before = '.$content_strlen_before.', after = '.$content_strlen_after );
+			$this->p->debug->log( 'content strlen before '.$content_strlen_before.', after '.$content_strlen_after );
 
 			// apply filters before caching
-			$content = apply_filters( $this->p->cf['lca'].'_content', $content, $use_post );
+			$content = apply_filters( $this->p->cf['lca'].'_content', $content, $post_id, $use_post, $custom, $source_id );
 
 			if ( $filter_content == true && ! empty( $cache_id ) ) {
 				// only some caching plugins implement this function
@@ -561,8 +561,8 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 		public function get_section( $post_id ) {
 			$section = '';
 			if ( ( is_singular() || ! empty( $post_id ) ) && 
-				isset( $this->p->addons['util']['postmeta'] ) )
-					$section = $this->p->addons['util']['postmeta']->get_options( $post_id, 'og_art_section' );
+				isset( $this->p->mods['util']['postmeta'] ) )
+					$section = $this->p->mods['util']['postmeta']->get_options( $post_id, 'og_art_section' );
 
 			if ( ! empty( $section ) ) 
 				$this->p->debug->log( 'found custom meta section = '.$section );
@@ -598,7 +598,7 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 			else {
 				if ( is_singular() || ! empty( $post_id ) ) {
 					$tags = $this->get_wp_tags( $post_id );
-					if ( isset( $this->p->addons['media']['ngg'] ) && 
+					if ( isset( $this->p->mods['media']['ngg'] ) && 
 						$this->p->options['og_ngg_tags'] && 
 						$this->p->is_avail['postthumb'] && 
 						has_post_thumbnail( $post_id ) ) {
@@ -606,7 +606,7 @@ if ( ! class_exists( 'SucomWebpage' ) ) {
 						$pid = get_post_thumbnail_id( $post_id );
 						// featured images from ngg pre-v2 had 'ngg-' prefix
 						if ( is_string( $pid ) && substr( $pid, 0, 4 ) == 'ngg-' )
-							$tags = array_merge( $tags, $this->p->addons['media']['ngg']->get_tags( $pid ) );
+							$tags = array_merge( $tags, $this->p->mods['media']['ngg']->get_tags( $pid ) );
 					}
 				} elseif ( is_search() )
 					$tags = preg_split( '/ *, */', get_search_query( false ) );

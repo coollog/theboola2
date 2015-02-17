@@ -12,14 +12,17 @@ function yst_clean(str) {
 	return str;
 }
 
-function ptest(str, p) {
-	str = yst_clean(str);
+function ptest( str, p ) {
+	str = yst_clean( str );
 	str = str.toLowerCase();
-	var r = str.match(p);
-	if (r != null)
+	str = removeLowerCaseDiacritics( str );
+	p = removeLowerCaseDiacritics( str );
+	var r = str.match( p );
+	if ( r != null ){
 		return '<span class="good">Yes (' + r.length + ')</span>';
-	else
+	} else {
 		return '<span class="wrong">No</span>';
+	}
 }
 
 function removeLowerCaseDiacritics(str) {
@@ -163,7 +166,8 @@ function yst_replaceVariables(str, callback) {
 			if (replacedVars[matches[i]] != undefined) {
 				str = str.replace(matches[i], replacedVars[matches[i]]);
 			} else {
-				replaceableVar = matches[i];
+				var replaceableVar = matches[i];
+
 				// create the cache already, so we don't do the request twice.
 				replacedVars[replaceableVar] = '';
 				jQuery.post(ajaxurl, {
@@ -174,20 +178,15 @@ function yst_replaceVariables(str, callback) {
 						}, function (data) {
 							if (data) {
 								replacedVars[replaceableVar] = data;
-								yst_replaceVariables(str, callback);
-							} else {
-								yst_replaceVariables(str, callback);
 							}
+
+							yst_replaceVariables(str, callback);
 						}
 				);
 			}
 		}
 	}
 	callback(str);
-}
-
-function yst_strip_tags(string) {
-	return jQuery(jQuery('<div />')).html( string ).text();
 }
 
 function yst_updateTitle(force) {
@@ -222,7 +221,7 @@ function yst_updateTitle(force) {
 		var placeholder_title = divHtml.html(title).text();
 		titleElm.attr('placeholder', placeholder_title);
 
-		title = yst_strip_tags(title);
+		title = yst_clean(title);
 
 		// and now the snippet preview title
 		title = yst_boldKeywords(title, false);
@@ -281,8 +280,14 @@ function yst_updateDesc() {
 		snippet.find('.desc span.content').html('');
 		yst_testFocusKw();
 
-		if (jQuery('#content').length) {
-			desc = jQuery('#content').val();
+		if (tinyMCE.get('excerpt') !== null) {
+			desc = tinyMCE.get('excerpt').getContent();
+			desc = yst_clean(desc);
+		}
+
+		if ( tinyMCE.get('content') !== null && desc.length === 0) {
+			desc = tinyMCE.get('content').getContent();
+
 			desc = yst_clean(desc);
 		}
 
@@ -451,12 +456,24 @@ jQuery(document).ready(function () {
 	jQuery('#' + wpseoMetaboxL10n.field_prefix + 'metadesc').keyup(function () {
 		yst_updateDesc();
 	});
-	jQuery('#excerpt').keyup(function () {
-		yst_updateDesc();
-	});
-	jQuery('#content').focusout(function () {
-		yst_updateDesc();
-	});
+
+	// Set time out because of tinymce is initialized later then this is done
+	setTimeout(
+		function() {
+			yst_updateSnippet();
+
+			// Adding events to content and excerpt
+			if( tinyMCE.get( 'content' ) !== null ) {
+				tinyMCE.get( 'content' ).on( 'blur', yst_updateDesc );
+			}
+
+			if( tinyMCE.get( 'excerpt' ) !== null ) {
+				tinyMCE.get( 'excerpt' ).on( 'blur', yst_updateDesc );
+			}
+		},
+		500
+	);
+
 	var focuskwhelptriggered = false;
 	jQuery(document).on('change', '#' + wpseoMetaboxL10n.field_prefix + 'focuskw', function () {
 		var focuskwhelpElm = jQuery('#focuskwhelp');
@@ -472,29 +489,35 @@ jQuery(document).ready(function () {
 	});
 
 
-	jQuery(".yoast_help").qtip({
-		position: {
-			corner: {
-				target : 'topMiddle',
-				tooltip: 'bottomLeft'
-			}
-		},
-		show    : {
-			when: {
-				event: 'mouseover'
-			}
-		},
-		hide    : {
-			fixed: true,
-			when : {
-				event: 'mouseout'
-			}
-		},
-		style   : {
-			tip : 'bottomLeft',
-			name: 'blue'
-		}
-	});
 
-	yst_updateSnippet();
+	jQuery(".yoast_help").qtip(
+		{
+			content: {
+				attr: 'alt'
+			},
+			position: {
+				my: 'bottom left',
+				at: 'top center'
+			},
+			style   : {
+				tip: {
+					corner: true
+				},
+				classes : 'yoast-qtip qtip-rounded qtip-blue'
+			},
+			show    : {
+				when: {
+					event: 'mouseover'
+				}
+			},
+			hide    : {
+				fixed: true,
+				when : {
+					event: 'mouseout'
+				}
+			}
+
+		}
+	);
+
 });
