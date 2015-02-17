@@ -67,10 +67,12 @@ body {
   display: block;
   text-align: left;
   position: absolute;
+  width: 100%;
 }
 
 .firstpost img {
   width: 900px;
+  float: none;
 }
 
 .featuredBox {
