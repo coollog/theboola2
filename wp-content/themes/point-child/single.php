@@ -86,6 +86,6 @@
     </article>
     <!-- End Article -->
     <!-- Start Sidebar -->
-    <?php if (!is_post()) get_sidebar(); ?>
+    <?php /*if (!is_post()) get_sidebar();*/ ?>
     <!-- End Sidebar -->
     <?php get_footer(); ?>
