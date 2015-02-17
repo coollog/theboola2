@@ -110,3 +110,8 @@ body {
 .sidebar, .sidebar.c-4-12 {
   max-width: none;
 }
+
+.single_post {
+  max-width: 960px;
+  margin: 0 auto;
+}
