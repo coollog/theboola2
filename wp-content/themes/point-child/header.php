@@ -9,6 +9,9 @@
 	<![endif]-->
 	<link rel="profile" href="http://gmpg.org/xfn/11" />
 	<title><?php wp_title( '|', true, 'right' ); ?></title>
+	<?php if ( is_home() ) { ?>
+		<meta name="description" content="Yale's first social news outlet for the busy (and not so busy) Yalie-on-the-go. Articles published every Sundays and Thursdays." />
+	<?php } ?>
 	<?php mts_meta(); ?>
 	<link rel="pingback" href="<?php bloginfo( 'pingback_url' ); ?>" />
 	<?php wp_head(); ?>
