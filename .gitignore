@@ -5,4 +5,3 @@ wp-content/w3tc-config/
 wp-content/advanced-cache.php
 mysql_dumps/backup.sh
 old_site/
-dev/
