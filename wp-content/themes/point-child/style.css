@@ -79,6 +79,7 @@ body {
   text-align: center;
   position: relative;
   height: 50vw;
+  max-height: 500px;
   width: 100%;
   margin: 0 auto;
   padding: 24px 0 0 0;
@@ -89,6 +90,7 @@ body {
   transition: 0.5s all ease-in-out;
   position: absolute;
   height: 50vw;
+  max-height: 500px;
   width: 100%;
 }
 
@@ -99,6 +101,7 @@ body {
 .tonyImage {
   display: block;
   height: 50vw;
+  max-height: 500px;
   width: 100%;
   max-width: 900px;
   background: transparent no-repeat center center;
