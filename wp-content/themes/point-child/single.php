@@ -1,9 +1,4 @@
 <?php get_header(); ?>
-
-<?php if (isset($_GET['q'])) { ?>
-  hi
-<?php } ?>
-
 <?php $mts_options = get_option('point'); ?>
 <div id="page" class="single">
   <div class="content">

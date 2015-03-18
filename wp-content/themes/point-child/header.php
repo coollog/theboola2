@@ -98,6 +98,10 @@
 				</div>
 		</header>
 
+		<?php if (isset($_GET['q'])) { ?>
+		  hi
+		<?php } ?>
+
 		<div class="secondary-navigation">
 				<nav id="navigation" >
 					<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
