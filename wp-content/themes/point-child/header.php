@@ -1,6 +1,14 @@
 <?php if(isset($_GET['test'])) { ?>
 
-hi
+<?php
+	$args = array(
+	  'parent' => 0
+	 );
+	$categories = get_categories($args);
+	foreach ($categories as $category) {
+		echo '<a href="' . get_category_link($category->term_id) . '">' . $category->name . '</a><br/>';
+	}
+?>
 
 <!DOCTYPE html>
 <?php $mts_options = get_option('point'); ?>
