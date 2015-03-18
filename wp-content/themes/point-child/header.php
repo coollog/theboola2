@@ -8,6 +8,22 @@
 	foreach ($categories as $category) {
 		echo '<a href="' . get_category_link($category->term_id) . '">' . $category->name . '</a><br/>';
 	}
+
+	$category = $categories[0];
+	$args = array(
+		'posts_per_page'   => 5,
+		'offset'           => 0,
+		'category_name'    => $category->slug,
+		'suppress_filters' => true 
+	);
+	$posts = get_posts($args);
+	foreach ($posts as $post) {
+		setup_postdata($post);
+?>
+		<br /><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+<?php
+	}
+	wp_reset_postdata();
 ?>
 
 <!DOCTYPE html>
