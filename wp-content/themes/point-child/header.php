@@ -1,6 +1,9 @@
 <?php if(isset($_GET['test'])) { ?>
 
 <?php
+  error_reporting(E_ALL & ~E_STRICT);
+  ini_set('display_errors', '1');
+
 	$args = array(
 	  'parent' => 0
 	 );
