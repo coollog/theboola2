@@ -19,8 +19,11 @@
 	$posts = get_posts($args);
 	foreach ($posts as $post) {
 		setup_postdata($post);
+		$thumbnail = wp_get_attachment_image_src(
+			get_post_thumbnail_id($post->ID), 'small'
+		);
 ?>
-		<br /><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+		<br /><img src="<?php $thumbnail; ?>" /><?php the_title(); ?></a>
 <?php
 	}
 	wp_reset_postdata();
