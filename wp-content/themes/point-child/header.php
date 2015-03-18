@@ -100,7 +100,7 @@
 
 		<?php if (isset($_GET['q'])) { ?>
 		  hi
-		<?php } ?>
+		<?php } else { ?>
 
 		<div class="secondary-navigation">
 				<nav id="navigation" >
@@ -115,6 +115,8 @@
 				</nav>
 			</div>
 		</div>
+
+		<?php } ?>
 
 		<?php if ($mts_options['mts_header_adcode'] != '') { ?>
 			<div class="header-bottom-second">
