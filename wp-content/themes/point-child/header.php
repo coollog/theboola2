@@ -1,4 +1,7 @@
 <?php if(isset($_GET['test'])) { ?>
+
+hi
+
 <!DOCTYPE html>
 <?php $mts_options = get_option('point'); ?>
 <html class="no-js" <?php language_attributes(); ?>>
@@ -97,11 +100,6 @@
 					<a href="mailto:diane.kim@yale.edu"><img src="http://theboola.com/wp-content/uploads/2015/02/pic4.png" /></a>
 				</div>
 		</header>
-
-		<?php if (isset($_GET['q'])) { ?>
-		  hi
-		<?php } else { ?>
-
 		<div class="secondary-navigation">
 				<nav id="navigation" >
 					<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
@@ -115,9 +113,6 @@
 				</nav>
 			</div>
 		</div>
-
-		<?php } ?>
-
 		<?php if ($mts_options['mts_header_adcode'] != '') { ?>
 			<div class="header-bottom-second">
 				<?php echo '<div id="header-widget-container">';
