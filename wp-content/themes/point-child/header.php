@@ -215,7 +215,9 @@
 					</div>
 			<?php } ?>
 		<?php }} ?>
+
 <?php } else { ?>
+
 <!DOCTYPE html>
 <?php $mts_options = get_option('point'); ?>
 <html class="no-js" <?php language_attributes(); ?>>
@@ -380,10 +382,10 @@
 							<a href="<?php the_permalink() ?>" title="<?php the_title(); ?>" rel="nofollow">
 								<div class="tonyBox" index="<?php echo $i - 1; ?>">
 									<?php if ( has_post_thumbnail() ) { ?> 
-											<?php the_post_thumbnail('bigthumb',array('title' => '')); ?>
+											<?php the_post_thumbnail('full',array('title' => '')); ?>
 										<?php } else { ?>
 											<div class="featured-thumbnail">
-												<img src="<?php echo get_template_directory_uri(); ?>/images/bigthumb.png" class="attachment-featured wp-post-image" alt="<?php the_title(); ?>">
+												<img src="<?php echo get_template_directory_uri(); ?>/images/full.png" class="attachment-featured wp-post-image" alt="<?php the_title(); ?>">
 											</div>
 										<?php } ?>
 									<div class="tonyImage"></div>
