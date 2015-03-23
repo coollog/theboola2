@@ -33,6 +33,12 @@ body {
   font-weight: 300;
 }
 
+.drop-down {
+  display: none;
+  height: 150px;
+  width: 100%;
+}
+
 /* TONY'S NAVBAR EDITS */
 @media screen and (min-width:866px) {
   #navigation {
@@ -40,6 +46,9 @@ body {
   }
   #navigation .menu {
     border: 0;
+    float: none;
+    display: inline-block;
+    height: 100%;
   }
 
   .secondary-navigation a {
@@ -48,6 +57,39 @@ body {
     font-size: 32px;
     letter-spacing: 0.01em;
     padding: 5px 30px 0 30px!important;
+  }
+
+  nav #top-menu {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 865px) {
+  nav #top-menu {
+    display: block;
+    width: 100%;
+    position: relative;
+    color: #fff;
+    padding: 10px 0;
+    text-indent: 3%;
+    overflow: hidden;
+    max-width: 100%;
+    border: 0;
+  }
+
+  nav #top-menu:after {
+    content: "";
+    background: url(../../themes/point/css/images/nav-icon.png) no-repeat;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    position: absolute;
+    right: 3%;
+    top: 10px;
+  }
+
+  nav #menu-main {
+    display: none;
   }
 }
 
@@ -68,11 +110,7 @@ body {
   background: #000000;
   height: auto;
 }
-#navigation .menu {
-  float: none;
-  display: inline-block;
-  height: 100%;
-}
+
 .secondary-navigation a {
   border-right: 0;
   height: 100%;
@@ -180,6 +218,9 @@ body {
 #header {
   padding: 0;
   width: 100%;
+}
+#logo {
+  padding-left: 40px;
 }
 
 .main-container {

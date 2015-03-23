@@ -3,33 +3,71 @@
 <?php
   error_reporting(E_ALL & ~E_STRICT);
   ini_set('display_errors', '1');
+?>
 
-	$args = array(
+<!-- <style>
+	.navbar-post {
+		width: 19%;
+		height: 150px;
+		box-sizing: border-box;
+		display: inline-block;
+		background: transparent no-repeat center center;
+		background-size: cover;
+		position: relative;
+	}
+	.navbar-post-black {
+		background: rgba(0, 0, 0, 0.3);
+		width: 100%;
+		height: 100%;
+		transition: 0.2s all ease-in-out;
+	}
+	.navbar-post-black:hover {
+		background: rgba(0, 0, 0, 0.8);
+	}
+	.navbar-post-title {
+		position: absolute;
+		left: 10px;
+		right: 10px;
+		bottom: 10px;
+		font-family: "League Gothic", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+		font-size: 30px;
+		color: #fff;
+		line-height: 1.2em;
+	}
+</style> -->
+
+<?php
+	/*$categories = get_categories(array(
 	  'parent' => 0
-	 );
-	$categories = get_categories($args);
+	 ));
 	foreach ($categories as $category) {
 		echo '<a href="' . get_category_link($category->term_id) . '">' . $category->name . '</a><br/>';
 	}
 
 	$category = $categories[0];
-	$args = array(
+	$posts = get_posts(array(
 		'posts_per_page'   => 5,
 		'offset'           => 0,
 		'category_name'    => $category->slug,
 		'suppress_filters' => true 
-	);
-	$posts = get_posts($args);
+	));
 	foreach ($posts as $post) {
 		setup_postdata($post);
 		$thumbnail = array_shift(wp_get_attachment_image_src(
 			get_post_thumbnail_id($post->ID), 'medium'
-		));
+		));*/
 ?>
-		<br /><img src="<?php echo $thumbnail; ?>" /><?php the_title(); ?></a>
+		<!-- <a href="<?php the_permalink(); ?>">
+			<div class="navbar-post"
+					 style="background-image: url('<?php echo $thumbnail; ?>');">
+				<div class="navbar-post-black">
+					<div class="navbar-post-title"><?php the_title(); ?></div>
+				</div>
+			</div>
+		</a> -->
 <?php
-	}
-	wp_reset_postdata();
+	/*}
+	wp_reset_postdata();*/
 ?>
 
 <!DOCTYPE html>
@@ -74,6 +112,26 @@
 	      });
 	      setTimeout(function(){animating = false;}, 500);
 	    });
+	  	jQuery('#top-menu').click(function() {
+	    	jQuery('.menu').slideToggle(300);
+	    });
+	    jQuery('.menu-item').mouseover(function() {
+	    	var category = jQuery(jQuery(this)).text();
+	    	if(category !== 'Submit') {
+	    		jQuery('.' + category).css('display', 'inline-block');
+	    	}
+	    });
+	    jQuery('.menu-item').mouseleave(function() {
+	    	var category = jQuery(jQuery(this)).text();
+	    	if(!jQuery('.' + category).is(':hover')) {
+	    		jQuery('.' + category).css('display', 'none');
+	    	}
+	    });
+	    jQuery('.drop-down').mouseout(function() {
+	    	var category = jQuery(jQuery(this)).attr('class').split(' ')[0]
+	    	console.log(jQuery(this));
+	    	jQuery(jQuery(this)).css('display', 'none');
+	    });
 		});
 		function position() {
 			jQuery('.tonyBox').each(function() {
@@ -82,6 +140,7 @@
 			});
 		}
 		jQuery(window).resize(function() {
+				jQuery('#menu-main').removeAttr("style");
   			position();
 		});
 	</script>
@@ -150,19 +209,31 @@
 				</div>
 		</header>
 
-		<div class="secondary-navigation">
-				<nav id="navigation" >
-					<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
-						<?php $walker = new mts_Walker; wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker ) ); ?>
-					<?php } else { ?>
-						<ul class="menu">
-							<?php wp_list_categories('title_li='); ?>
-						</ul>
-					<?php } ?>
-					<a href="#" id="pull"><?php _e('Menu','mythemeshop'); ?></a>
-				</nav>
-			</div>
+		<div class="secondary-navigation tonynav">
+			<nav id="navigation" >
+        <a href="" class="tonynav" id="top-menu" onclick="return false;">Menu</a>
+				<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
+					<?php
+						$walker = new mts_Walker;
+						echo wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker, 'echo' => false ) ); 
+					?>
+				<?php } else { ?>
+					<ul class="menu">
+						<?php wp_list_categories('title_li='); ?>
+					</ul>
+				<?php } ?>
+			</nav>
 		</div>
+
+		<?php
+			$categories = get_categories(array(
+			  'parent' => 0
+			));
+			foreach ($categories as $category) {
+				if($category->name == 'Uncategorized') continue;
+				echo '<div class="' . $category->name . ' drop-down">' . $category->name . ' box. Feel free to remove this, Q.</div>';
+			}
+		?>
 
 		<?php if ($mts_options['mts_header_adcode'] != '') { ?>
 			<div class="header-bottom-second">
@@ -260,6 +331,9 @@
 	      });
 	      setTimeout(function(){animating = false;}, 500);
 	    });
+	    jQuery('#top-menu').click(function() {
+	    	jQuery('.menu').slideToggle(300);
+	    });
 		});
 		function position() {
 			jQuery('.tonyBox').each(function() {
@@ -268,6 +342,7 @@
 			});
 		}
 		jQuery(window).resize(function() {
+				jQuery('#menu-main').removeAttr("style")
   			position();
 		});
 	</script>
@@ -293,12 +368,12 @@
 					<?php if( is_front_page() || is_home() || is_404() ) { ?>
 							<h1 id="logo" class="image-logo">
                                 <?php list($width, $height, $type, $attr) = getimagesize($mts_options['mts_logo']); ?>
-								<a href="<?php echo home_url(); ?>"><img src="<?php echo $mts_options['mts_logo']; ?>" alt="<?php bloginfo( 'name' ); ?>" <?php echo $attr; ?>></a>
+								<a href="<?php echo home_url(); ?>"><img src="<?php echo $mts_options['mts_logo']; ?>" alt="<?php bloginfo( 'name' ); ?>" <?php //echo $attr; ?> style="height: 200px!important;"></a>
 							</h1><!-- END #logo -->
 					<?php } else { ?>
 						  <h2 id="logo" class="image-logo">
 								<?php list($width, $height, $type, $attr) = getimagesize($mts_options['mts_logo']); ?>
-								<a href="<?php echo home_url(); ?>"><img src="<?php echo $mts_options['mts_logo']; ?>" alt="<?php bloginfo( 'name' ); ?>" <?php echo $attr; ?>></a>
+								<a href="<?php echo home_url(); ?>"><img src="<?php echo $mts_options['mts_logo']; ?>" alt="<?php bloginfo( 'name' ); ?>" <?php //echo $attr; ?> style="height: 200px!important;"></a>
 							</h2><!-- END #logo -->
 					<?php } ?>
 				<?php } else { ?>
@@ -337,17 +412,17 @@
 		</header>
 
 		<div class="secondary-navigation">
-				<nav id="navigation" >
-					<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
-						<?php $walker = new mts_Walker; wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker ) ); ?>
-					<?php } else { ?>
-						<ul class="menu">
-							<?php wp_list_categories('title_li='); ?>
-						</ul>
-					<?php } ?>
-					<a href="#" id="pull"><?php _e('Menu','mythemeshop'); ?></a>
-				</nav>
-			</div>
+			<nav id="navigation" >
+				<a href="" class="tonynav" id="top-menu" onclick="return false;">Menu</a>
+				<?php if ( has_nav_menu( 'primary-menu' ) ) { ?>
+					<?php $walker = new mts_Walker; wp_nav_menu( array( 'theme_location' => 'primary-menu', 'menu_class' => 'menu', 'container' => '', 'walker' => $walker ) ); ?>
+				<?php } else { ?>
+					<ul class="menu">
+						<?php wp_list_categories('title_li='); ?>
+					</ul>
+				<?php } ?>
+				<!-- <a href="#" id="pull"><?php _e('Menu','mythemeshop'); ?></a> -->
+			</nav>
 		</div>
 
 		<?php if ($mts_options['mts_header_adcode'] != '') { ?>
