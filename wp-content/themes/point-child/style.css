@@ -33,12 +33,6 @@ body {
   font-weight: 300;
 }
 
-.drop-down {
-  display: none;
-  height: 150px;
-  width: 100%;
-}
-
 /* TONY'S NAVBAR EDITS */
 @media screen and (min-width:866px) {
   #navigation {
