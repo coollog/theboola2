@@ -85,6 +85,10 @@ body {
   nav #menu-main {
     display: none;
   }
+
+  .drop-down {
+    display: none !important;
+  }
 }
 
 /* NAVIGATION */
