@@ -1,13 +1,13 @@
 <?php
-$mts_options = get_option('point');	
+$mts_options = get_option('point'); 
 
 /*------------[ Meta ]-------------*/
 if ( ! function_exists( 'mts_meta' ) ) {
-	function mts_meta(){
-	global $mts_options
+  function mts_meta(){
+  global $mts_options
 ?>
 <?php if ($mts_options['mts_favicon'] != ''){ ?>
-	<link rel="icon" href="<?php echo $mts_options['mts_favicon']; ?>" type="image/x-icon" />
+  <link rel="icon" href="<?php echo $mts_options['mts_favicon']; ?>" type="image/x-icon" />
 <?php } ?>
 <!--iOS/android/handheld specific -->
 <link rel="apple-touch-icon" href="<?php echo get_template_directory_uri(); ?>/apple-touch-icon.png" />
@@ -19,8 +19,8 @@ if ( ! function_exists( 'mts_meta' ) ) {
 
 /*------------[ Head ]-------------*/
 if ( ! function_exists( 'mts_head' ) ){
-	function mts_head() {
-	global $mts_options
+  function mts_head() {
+  global $mts_options
 ?>
 <?php echo $mts_options['mts_header_code']; ?>
 <?php }
