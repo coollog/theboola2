@@ -61,7 +61,7 @@
   }
   .bottomlogo {
     width: 200px; height: 100px;
-    background: url('<?php echo $mts_options['mts_logo']; ?>') no-repeat center center;
+    background: url('<?php echo $mts_options['mts_footer_logo']; ?>') no-repeat center center;
     background-size: contain;
     display: inline-block;
   }
@@ -128,29 +128,6 @@
     </div>
   </div>
 </div>
-<!-- <div class="copyrights">
-  <div class="row" id="copyright-note">
-    <?php list($width, $height, $type, $attr) = getimagesize($mts_options['mts_logo']); ?>
-    <div class="foot-logo">
-      <a href="<?php echo home_url(); ?>" rel="nofollow">
-        <img src="<?php echo $mts_options['mts_footer_logo']; ?>" alt="<?php bloginfo( 'name' ); ?>" <?php echo $attr; ?>>
-      </a>
-    <div class="copyright-left-text">
-      Copyright &copy; <?php echo date("Y") ?> <a href="<?php echo home_url(); ?>" title="<?php bloginfo('description'); ?>" rel="nofollow"><?php bloginfo('name'); ?></a>.
-    </div>
-    <div class="footer-navigation">
-      <?php if ( has_nav_menu( 'footer-menu' ) ) { ?>
-        <?php wp_nav_menu( array( 'theme_location' => 'footer-menu', 'menu_class' => 'menu', 'container' => '' ) ); ?>
-      <?php } else { ?>
-        <ul class="menu">
-          <?php wp_list_pages('title_li='); ?>
-        </ul>
-      <?php } ?>
-    </div>
-    <div class="top"><a href="#top" class="toplink">&nbsp;</a></div>
-  </div>
-</div>
- -->
 <?php wp_footer(); ?>
 </div><!--.main-container-->
 </body>
