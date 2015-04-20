@@ -1,17 +1,17 @@
 ﻿=== WPFront User Role Editor ===
 Contributors: syammohanm
 Donate link: https://wpfront.com/donate/
-Tags: user role editor, role editor, user role, role, user roles, roles, user roles editor, roles editor, role manager, roles manager, manage roles, manage role, access, capability, editor, permission, role, security, user, capability editor, capability manager, custom post types, custom post type permissions, custom post type capabilities, post type permissions, post type capabilities, menu editor, role menu, role menu editor, multisite roles, multisite role editor, multisite user roles, import roles, export roles
+Tags: WordPress user role editor, user role editor, role editor, user role, role, WordPress user roles, user roles, roles, user roles editor, roles editor, role manager, roles manager, manage roles, manage role, access, capability, editor, permission, role, security, user, capability editor, capability manager, custom post types, custom post type permissions, custom post type capabilities, post type permissions, post type capabilities, menu editor, role menu, role menu editor, multisite roles, multisite role editor, multisite user roles, import roles, export roles
 Requires at least: 3.5
-Tested up to: 4.1
-Stable tag: 2.4
+Tested up to: 4.1.1
+Stable tag: 2.9.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Easily allows you to manage user roles. You can create, edit, delete and manage capabilities, also copy existing roles.
+Easily allows you to manage WordPress user roles. You can create, edit, delete and manage capabilities, also copy existing roles.
 
 == Description ==
-This plugin allows you to easily manage user roles within your WordPress site. 
+WPFront User Role Editor plugin allows you to easily manage WordPress user roles within your site. 
 You can create, edit or delete user roles and manage role capabilities.
 
 ### Features
@@ -21,19 +21,27 @@ You can create, edit or delete user roles and manage role capabilities.
 * Manage capabilities.
 * Allows you to add role capabilities.
 * Change default user role.
+* Add or Remove capabilities.
 * Restore role.
 * Assign multiple roles.
 * Migrate users.
-* Menu editor. [PRO]
-* Post/Page extended permissions. [PRO]
-* Custom post type permissions. [PRO]
-* Import/Export. [PRO]
-* Multisite. [PRO]
+* Navigation menu permissions basic.
+* Login redirect basic.
+* [Admin menu editor.](https://wpfront.com/user-role-editor-pro/menu-editor/) [PRO]
+* [Media library permissions.](https://wpfront.com/user-role-editor-pro/media-attachment-file-permissions/) [PRO]
+* [Navigation menu permissions advanced.](https://wpfront.com/user-role-editor-pro/navigation-menu-permissions/) [PRO]
+* [Login redirect advanced.](https://wpfront.com/user-role-editor-pro/login-redirect/) [PRO]
+* [Post/Page extended permissions.](https://wpfront.com/user-role-editor-pro/posts-pages-extended-permissions/) [PRO]
+* [Custom post type permissions.](https://wpfront.com/user-role-editor-pro/custom-post-type-permissions/) [PRO]
+* [Content restriction shortcodes.](https://wpfront.com/user-role-editor-pro/content-restriction-shortcodes/) [PRO]
+* [Import/Export.](https://wpfront.com/user-role-editor-pro/export-roles/) [PRO]
+* [Multisite support.](https://wpfront.com/user-role-editor-pro/multisite-sync-roles/) [PRO]
 
 Compare [User Role Editor Pro](https://wpfront.com/ppro)
 
 Localization Contributors:
 <li>[Mauro Mascarenhas](http://nintersoft.ml) (Portuguese) </li>
+<li>[Elger Lindgren](http://bilddigital.se) (Swedish) </li>
 
 Spanish tutorial
 https://www.youtube.com/watch?v=YRZdWH-uukI
@@ -68,8 +76,47 @@ Please visit [WPFront User Role Editor FAQ](https://wpfront.com/user-role-editor
 10. Add new role
 11. Edit role
 12. Restore role
+13. Navigation menu permissions
+14. Add or Remove capability
+15. Media library permissions
+16. Content restriction shortcodes
+17. Login redirect
 
 == Changelog ==
+
+= 2.9.1 =
+* Show toolbar inheritance bug fix.
+
+= 2.9 =
+* Login redirect added. [Documentation](https://wpfront.com/user-role-editor-pro/login-redirect/).
+* Assign roles compatibility fix.
+* Swedish translation added. Thanks to Elger.
+
+= 2.8 =
+* Content restriction shortcodes added. [Documentation](https://wpfront.com/user-role-editor-pro/content-restriction-shortcodes/).
+
+= 2.7 =
+* Media library permissions added. [Documentation](https://wpfront.com/user-role-editor-pro/media-attachment-file-permissions/).
+* Admin menu editor bug fix.
+
+= 2.6.2 =
+* bbPress forum extended permissions bug fix.
+* Stability improvements.
+
+= 2.6.1 =
+* Role permission column width removed.
+
+= 2.6 =
+* Add or Remove Capability functionality added. [Documentation](https://wpfront.com/user-role-editor-pro/add-remove-capability/).
+
+= 2.5.1 =
+* Navigation menu permission setting added. [Documentation](https://wpfront.com/user-role-editor-pro/navigation-menu-permissions/).
+* IMPORTANT: Disable navigation menu permission, if you already have a Nav Menu permission plugin and if it stops working.
+* Navigation menu permission uninstall cleanup bug fix.
+
+= 2.5 =
+* Navigation menu permissions added. [Documentation](https://wpfront.com/user-role-editor-pro/navigation-menu-permissions/).
+* Compatibility fix with "The Events Calendar".
 
 = 2.4 =
 * Gravity forms integration.
@@ -119,6 +166,33 @@ Please visit [WPFront User Role Editor FAQ](https://wpfront.com/user-role-editor
 * Initial release.
 
 == Upgrade Notice ==
+
+= 2.9.1 =
+* Bug fix.
+
+= 2.9 =
+* Login redirect.
+
+= 2.8 =
+* Content restriction shortcodes.
+
+= 2.7 =
+* Media file permissions.
+
+= 2.6.2 =
+* Bug fixes and stability improvements.
+
+= 2.6.1 = 
+* CSS fix.
+
+= 2.6 =
+* Add or Remove Capability functionality added.
+
+= 2.5.1 =
+* Navigation menu permission setting added.
+
+= 2.5 =
+* Navigation menu permissions and compatibility fix.
 
 = 2.4 =
 * Gravity forms integration.

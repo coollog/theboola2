@@ -49,9 +49,7 @@ jQuery(function($) {
                 html += '<tr><td class="mnmshortcode_description" colspan="2">'+shortcodes[mnm_shortcodeid]['description']+'</td></tr>';
             }
             $.each(shortcodes[mnm_shortcodeid]['atts'], function(index, item) {
-                var label = index;
-                if (typeof shortcodes[mnm_shortcodeid]['att_labels'] !== 'undefined' && typeof shortcodes[mnm_shortcodeid]['att_labels'][index] !== 'undefined') label = shortcodes[mnm_shortcodeid]['att_labels'][index];
-                html += '<tr class="mnmshortcode_att_name"><td>'+label+'</td><td><input type="text" name="shortcode_att_'+index+'" id="shortcode_att_'+index+'" value="'+item+'" /></td></tr>';
+                html += '<tr class="mnmshortcode_att_name"><td>'+index+'</td><td><input type="text" name="shortcode_att_'+index+'" id="shortcode_att_'+index+'" value="'+item+'" /></td></tr>';
             });
             
             if (!shortcodes[mnm_shortcodeid]['self-closing']) {

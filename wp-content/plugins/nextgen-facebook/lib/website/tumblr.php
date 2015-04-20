@@ -28,12 +28,8 @@ if ( ! class_exists( 'NgfbSubmenuSharingTumblr' ) && class_exists( 'NgfbSubmenuS
 					$buttons_html .= '
 						<div class="btn_wizard_example clearfix">
 						<label for="share_'.$i.$t.'">
-						<input type="radio" id="share_'.$i.$t.'" 
-							name="'.$this->form->options_name.'[tumblr_button_style]" 
-							value="share_'.$i.$t.'" '.
-							checked( 'share_'.$i.$t, $buttons_style, false ).'/>
-						<img src="'.$this->p->util->get_cache_url( 'http://platform.tumblr.com/v1/share_'.$i.$t.'.png' ).'" 
-							height="20" class="share_button_image"/>
+						<input type="radio" id="share_'.$i.$t.'" name="'.$this->form->options_name.'[tumblr_button_style]" value="share_'.$i.$t.'" '.  checked( 'share_'.$i.$t, $buttons_style, false ).'/>
+						<img src="'.$this->p->util->get_cache_url( 'http://platform.tumblr.com/v1/share_'.$i.$t.'.png' ).'" height="20" class="share_button_image"/>
 						</label>
 						</div>
 					';
@@ -42,11 +38,7 @@ if ( ! class_exists( 'NgfbSubmenuSharingTumblr' ) && class_exists( 'NgfbSubmenuS
 			}
 			$buttons_html .= '</div>';
 
-			$rows[] = $this->p->util->th( 'Show Button in', 'short highlight', null,
-			'The Tumblr button shares a <em>custom image ID</em>, a <em>featured</em> image, 
-			or an <em>attached</em> image that is equal to (or larger) than the \'Image Dimensions\' 
-			you have chosen (when the <em>Use Attached Image</em> option is checked), embedded video, 
-			the content of <em>quote</em> custom Posts, or the webpage link.' ).'<td>'.
+			$rows[] = $this->p->util->th( 'Show Button in', 'short highlight', null, 'The Tumblr button shares a <em>custom image ID</em>, a <em>featured</em> image, or an <em>attached</em> image that is equal to (or larger) than the \'Image Dimensions\' you have chosen (when the <em>Use Attached Image</em> option is checked), embedded video, the content of <em>quote</em> custom Posts, or the webpage link.' ).'<td>'.
 			( $this->show_on_checkboxes( 'tumblr' ) ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Preferred Order', 'short' ).'<td>'.
@@ -54,25 +46,26 @@ if ( ! class_exists( 'NgfbSubmenuSharingTumblr' ) && class_exists( 'NgfbSubmenuS
 				range( 1, count( $this->p->admin->submenu['sharing']->website ) ), 
 					'short' ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'JavaScript in', 'short' ).'<td>'.
 				$this->form->get_select( 'tumblr_js_loc', $this->p->cf['form']['js_locations'] ).'</td>';
 			}
 
-			$rows[] = $this->p->util->th( 'Button Style', 'short' ).'<td>'.$buttons_html.'</td>';
+			$rows[] = $this->p->util->th( 'Button Style', 'short' ).
+				'<td class="btn_wizard">'.$buttons_html.'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'Use Attached as Photo', 'short' ).'<td>'.
 				$this->form->get_checkbox( 'tumblr_photo' ).'</td>';
 			}
 
 			$rows[] = $this->p->util->th( 'Image Dimensions', 'short' ).
-			'<td>'.$this->form->get_image_dimensions_input( 'tumblr_img', false, true, $this->p->options['plugin_display'] ).'</td>';
+			'<td>'.$this->form->get_image_dimensions_input( 'tumblr_img', false, true ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Media Caption', 'short' ).'<td>'.
 			$this->form->get_select( 'tumblr_caption', $this->p->cf['form']['caption_types'] ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'Caption Length', 'short' ).'<td>'.
 				$this->form->get_input( 'tumblr_cap_len', 'short' ).' characters or less</td>';
 	

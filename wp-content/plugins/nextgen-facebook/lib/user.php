@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) )
 
 if ( ! class_exists( 'NgfbUser' ) ) {
 
+	/*
+	 * This class is extended by gpl/util/user.php or pro/util/user.php
+	 * and the class object is created as $this->p->mods['util']['user']
+	 */
 	class NgfbUser {
 
 		protected $p;
@@ -17,8 +21,12 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 		protected $header_tags = array();
 		protected $post_info = array();
 
+		protected $opts = array();
+		protected $defs = array();
+		protected static $pref = array();
+
 		protected function add_actions() {
-			add_filter( 'user_contactmethods', array( &$this, 'add_contact_methods' ), 20, 1 );
+			add_filter( 'user_contactmethods', array( &$this, 'add_contact_methods' ), 20, 2 );
 
 			if ( is_admin() ) {
 				add_action( 'admin_head', array( &$this, 'set_header_tags' ) );
@@ -27,31 +35,41 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 				add_action( 'edit_user_profile', array( &$this, 'show_metaboxes' ), 20 );
 				add_action( 'edit_user_profile_update', array( &$this, 'sanitize_contact_methods' ), 5 );
 				add_action( 'edit_user_profile_update', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY );
+				add_action( 'edit_user_profile_update', array( &$this, 'flush_cache' ), NGFB_META_CACHE_PRIORITY );
 				add_action( 'personal_options_update', array( &$this, 'sanitize_contact_methods' ), 5 ); 
 				add_action( 'personal_options_update', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY ); 
+				add_action( 'personal_options_update', array( &$this, 'flush_cache' ), NGFB_META_CACHE_PRIORITY ); 
 			}
 		}
 
 		public function add_metaboxes() {
 			$add_metabox = empty( $this->p->options[ 'plugin_add_to_user' ] ) ? false : true;
 			if ( apply_filters( $this->p->cf['lca'].'_add_metabox_usermeta', $add_metabox ) === true )
-				add_meta_box( NGFB_META_NAME, 'Social Settings', array( &$this, 'show_metabox_usermeta' ), 'user', 'normal', 'high' );
+				add_meta_box( NGFB_META_NAME, 'Social Settings', array( &$this, 'show_metabox_usermeta' ), 
+					'user', 'normal', 'high' );
 		}
 
+		// hooked into the admin_head action
 		public function set_header_tags() {
-			if ( ! empty( $this->header_tags ) )
+			if ( ! empty( $this->header_tags ) )	// only set header tags once
 				return;
+
 			$screen = get_current_screen();
-			$page = $screen->id;
-			switch ( $page ) {
+			$this->p->debug->log( 'screen id = '.$screen->id );
+			switch ( $screen->id ) {
 				case 'user-edit':
 				case 'profile':
 					$add_metabox = empty( $this->p->options[ 'plugin_add_to_user' ] ) ? false : true;
-					if ( apply_filters( $this->p->cf['lca'].'_add_metabox_usermeta', $add_metabox, $page ) === true ) {
+					if ( apply_filters( $this->p->cf['lca'].'_add_metabox_usermeta', $add_metabox, $screen->id ) === true ) {
+
 						$this->p->util->add_plugin_image_sizes();
-						do_action( $this->p->cf['lca'].'_admin_usermeta_header', $page );
+						do_action( $this->p->cf['lca'].'_admin_usermeta_header', $screen->id );
 						$this->header_tags = $this->p->head->get_header_array( false );
-						$this->post_info = $this->p->head->get_post_info( $this->header_tags );
+						$this->post_info = $this->p->head->extract_post_info( $this->header_tags );
+
+						if ( ! empty( $this->p->options['plugin_check_head'] ) &&
+							empty( $this->post_info['og_image']['og:image'] ) )
+								$this->p->notice->err( 'A Facebook / Open Graph image meta tag for this webpage could not be generated. Facebook and other social websites require at least one image meta tag to render their shared content correctly.', true );
 					}
 					$this->p->debug->show_html( null, 'debug log' );
 					break;
@@ -61,8 +79,6 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 		public function show_metaboxes( $user ) {
 			if ( ! current_user_can( 'edit_user', $user->ID ) )
 				return;
-			if ( isset( $_GET['updated'] ) )
-				$this->flush_cache( $user->ID );
 			echo '<div id="poststuff">';
 			do_meta_boxes( 'user', 'normal', $user );
 			echo '</div>';
@@ -81,11 +97,11 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 			$metabox = 'user';
 			$tabs = apply_filters( $this->p->cf['lca'].'_'.$metabox.'_tabs', 
 				array( 
-					'header' => 'Title and Descriptions', 
+					'header' => 'Title / Descriptions', 
 					'media' => 'Priority Media', 
 					'preview' => 'Social Preview',
-					'tags' => 'Header Preview',
-					'tools' => 'Validation Tools'
+					'tags' => 'Head Tags',
+					'validate' => 'Validate'
 				)
 			);
 
@@ -95,7 +111,8 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 			$rows = array();
 			foreach ( $tabs as $key => $title )
 				$rows[$key] = array_merge( $this->get_rows( $metabox, $key, $this->post_info ), 
-					apply_filters( $this->p->cf['lca'].'_'.$metabox.'_'.$key.'_rows', array(), $this->form, $this->post_info ) );
+					apply_filters( $this->p->cf['lca'].'_'.$metabox.'_'.$key.'_rows', 
+						array(), $this->form, $this->post_info ) );
 			$this->p->util->do_tabs( $metabox, $tabs, $rows );
 		}
 
@@ -106,17 +123,19 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 					$rows = $this->p->mods['util']['postmeta']->get_rows_social_preview( $this->form, $post_info );
 					break;
 
-				case 'user-tools':
-					$rows = $this->p->mods['util']['postmeta']->get_rows_validation_tools( $this->form, $post_info );
+				case 'user-validate':
+					$rows = $this->p->mods['util']['postmeta']->get_rows_validation_links( $this->form, $post_info );
 					break; 
 
 				case 'user-tags':	
 					foreach ( $this->header_tags as $m ) {
-						$rows[] = '<th class="xshort">'.$m[1].'</th>'.
+						if ( ! empty( $m[1] ) )
+							$rows[] = '<th class="xshort">'.$m[1].'</th>'.
 							'<th class="xshort">'.$m[2].'</th>'.
-							'<td class="short">'.$m[3].'</td>'.
+							'<td class="short">'.( isset( $m[6] ) ? '<!-- '.$m[6].' -->' : '' ).$m[3].'</td>'.
 							'<th class="xshort">'.$m[4].'</th>'.
-							'<td class="wide">'.( strpos( $m[5], 'http' ) === 0 ? '<a href="'.$m[5].'">'.$m[5].'</a>' : $m[5] ).'</td>';
+							'<td class="wide">'.( strpos( $m[5], 'http' ) === 0 ? 
+								'<a href="'.$m[5].'">'.$m[5].'</a>' : $m[5] ).'</td>';
 					}
 					sort( $rows );
 					break; 
@@ -136,9 +155,11 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 			);
 		}
 
-		public function add_contact_methods( $fields = array() ) { 
+		public function add_contact_methods( $fields = array(), $user = null ) { 
 			// loop through each social website option prefix
-			if ( ! empty( $this->p->cf['opt']['pre'] ) && is_array( $this->p->cf['opt']['pre'] ) ) {
+			if ( ! empty( $this->p->cf['opt']['pre'] ) && 
+				is_array( $this->p->cf['opt']['pre'] ) ) {
+
 				foreach ( $this->p->cf['opt']['pre'] as $id => $pre ) {
 					$cm_opt = 'plugin_cm_'.$pre.'_';
 					// not all social websites have a contact fields, so check
@@ -146,13 +167,17 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 						$enabled = $this->p->options[$cm_opt.'enabled'];
 						$name = $this->p->options[$cm_opt.'name'];
 						$label = $this->p->options[$cm_opt.'label'];
-						if ( ! empty( $enabled ) && ! empty( $name ) && ! empty( $label ) )
-							$fields[$name] = $label;
+						if ( ! empty( $enabled ) && 
+							! empty( $name ) && 
+							! empty( $label ) )
+								$fields[$name] = $label;
 					}
 				}
 			}
 			if ( $this->p->check->aop() && 
-				! empty( $this->p->cf['wp']['cm'] ) && is_array( $this->p->cf['wp']['cm'] ) ) {
+				! empty( $this->p->cf['wp']['cm'] ) && 
+				is_array( $this->p->cf['wp']['cm'] ) ) {
+
 				foreach ( $this->p->cf['wp']['cm'] as $id => $name ) {
 					$cm_opt = 'wp_cm_'.$id.'_';
 					if ( array_key_exists( $cm_opt.'enabled', $this->p->options ) ) {
@@ -184,18 +209,17 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 						// sanitize values only for those enabled contact methods
 						$val = wp_filter_nohtml_kses( $_POST[$name] );
 						if ( ! empty( $val ) ) {
-							// use the social prefix id to decide on actions
-							switch ( $id ) {
-								case 'skype':
+							switch ( $name ) {
+								case $this->p->options['plugin_cm_skype_name']:
 									// no change
 									break;
-								case 'twitter':
-									$val = substr( preg_replace( '/[^a-z0-9_]/', '', 
-										strtolower( $val ) ), 0, 15 );
+								case $this->p->options['plugin_cm_twitter_name']:
+									$val = substr( preg_replace( '/[^a-zA-Z0-9_]/', '', $val ), 0, 15 );
 									if ( ! empty( $val ) ) 
 										$val = '@'.$val;
 									break;
 								default:
+									// all other contact methods are assumed to be URLs
 									if ( strpos( $val, '://' ) === false )
 										$val = '';
 									break;
@@ -205,12 +229,69 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 					}
 				}
 			}
+			return $user_id;
 		}
 
-		public function get_article_author( $author_id ) {
+		// provides backwards compatibility for wp 3.0
+		public static function get_user_id_contact_methods( $user_id ) {
+			$user = get_user_by( 'id', $user_id );
+			if ( function_exists( 'wp_get_user_contact_methods' ) )	// since wp 3.7
+				return wp_get_user_contact_methods( $user );
+			else {
+				$methods = array();
+				if ( get_site_option( 'initial_db_version' ) < 23588 ) {
+					$methods = array(
+						'aim'    => __( 'AIM' ),
+						'yim'    => __( 'Yahoo IM' ),
+						'jabber' => __( 'Jabber / Google Talk' )
+					); 
+				}
+				return apply_filters( 'user_contactmethods', $methods, $user );
+			}
+		}
+
+		public function get_person_json_script( $author_id, $size_name = 'thumbnail' ) {
+			if ( empty( $author_id ) )
+				return false;
+
+			$website_url = get_the_author_meta( 'url', $author_id );
+			if ( strpos( $website_url, '://' ) === false )
+				return false;
+
+			$cm = self::get_user_id_contact_methods( $author_id );
+			$og_image = $this->p->media->get_author_image( 1, $size_name, $author_id, false );
+			if ( count( $og_image ) > 0 ) {
+				$image = reset( $og_image );
+				$image_url = $image['og:image'];
+			} else $image_url = '';
+
+			$json_script = '<script type="application/ld+json">{
+	"@context" : "http://schema.org",
+	"@type" : "Person",
+	"name" : "'.$this->get_author_name( $author_id, 'fullname' ).'",
+	"url" : "'.$website_url.'",
+	"image" : "'.$image_url.'",
+	"sameAs" : ['."\n";
+			foreach ( $cm as $id => $label ) {
+				$sameAs = trim( get_the_author_meta( $id, $author_id ) );
+				if ( empty( $sameAs ) )
+					continue;
+
+				if ( $id === $this->p->options['plugin_cm_twitter_name'] )
+					$sameAs = 'https://twitter.com/'.preg_replace( '/^@/', '', $sameAs );
+
+				if ( strpos( $sameAs, '://' ) !== false )
+					$json_script .= "\t\t\"".$sameAs."\",\n";
+			}
+			$json_script = rtrim( $json_script, ",\n" )."\n\t]\n}</script>\n";
+
+			return $json_script;
+		}
+
+		public function get_article_author( $author_id, $url_field = 'og_author_field' ) {
 			$ret = array();
 			if ( ! empty( $author_id ) ) {
-				$ret[] = $this->get_author_website_url( $author_id, $this->p->options['og_author_field'] );
+				$ret[] = $this->get_author_website_url( $author_id, $this->p->options[$url_field] );
 
 				// add the author's name if this is the Pinterest crawler
 				if ( SucomUtil::crawler_name( 'pinterest' ) === true )
@@ -266,11 +347,12 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 					// if empty or not a url, then fallback to the author index page,
 					// if the requested field is the opengraph or link author field
 					if ( empty( $url ) || ! preg_match( '/:\/\//', $url ) ) {
-						if ( ( $field_id == $this->p->options['og_author_field'] || 
-							$field_id == $this->p->options['link_author_field'] ) && 
-							$this->p->options['og_author_fallback'] ) {
-								$this->p->debug->log( 'fetching the author index page url as fallback' );
-								$url = get_author_posts_url( $author_id );
+						if ( $this->p->options['og_author_fallback'] && (
+							$field_id === $this->p->options['og_author_field'] || 
+							$field_id === $this->p->options['seo_author_field'] ) ) {
+
+							$this->p->debug->log( 'fetching the author index page url as fallback' );
+							$url = get_author_posts_url( $author_id );
 						}
 					}
 					break;
@@ -380,6 +462,59 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 			return $user_id;
 		}
 
+		public static function save_pref( $prefs, $user_id = false ) {
+			$user_id = $user_id === false ? 
+				get_current_user_id() : $user_id;
+			if ( ! current_user_can( 'edit_user', $user_id ) )
+				return false;
+			if ( ! is_array( $prefs ) || empty( $prefs ) )
+				return false;
+
+			$old_prefs = self::get_pref( false, $user_id );	// get all prefs for user
+			$new_prefs = array_merge( $old_prefs, $prefs );
+
+			// don't bother saving unless we have to
+			if ( $old_prefs !== $new_prefs ) {
+				self::$pref[$user_id] = $new_prefs;	// update the pref cache
+				unset( $new_prefs['options_filtered'] );
+				update_user_meta( $user_id, NGFB_PREF_NAME, $new_prefs );
+				return true;
+			} else return false;
+		}
+
+		public static function show_opts( $test = false, $user_id = false ) {
+			$user_id = $user_id === false ? 
+				get_current_user_id() : $user_id;
+			$value = self::get_pref( 'show_opts' );
+			if ( $test !== false )
+				return $test === $value ? true : false;
+			else return $value;
+		}
+
+		public static function get_pref( $idx = false, $user_id = false ) {
+			$user_id = $user_id === false ? 
+				get_current_user_id() : $user_id;
+			if ( ! isset( self::$pref[$user_id]['options_filtered'] ) || 
+				self::$pref[$user_id]['options_filtered'] !== true ) {
+
+				self::$pref[$user_id] = get_user_meta( $user_id, NGFB_PREF_NAME, true );
+				if ( ! is_array( self::$pref[$user_id] ) )
+					self::$pref[$user_id] = array();
+
+				$ngfb = Ngfb::get_instance();
+				if ( ! isset( self::$pref[$user_id]['show_opts'] ) )
+					self::$pref[$user_id]['show_opts'] = $ngfb->options['plugin_show_opts'];
+
+				self::$pref[$user_id]['options_filtered'] = true;
+			}
+			if ( $idx !== false ) {
+				if ( isset( self::$pref[$user_id][$idx] ) ) 
+					return self::$pref[$user_id][$idx];
+				else return false;
+			} else return self::$pref[$user_id];
+			return false;	// just in case
+		}
+
 		public function flush_cache( $user_id ) {
 			$lang = SucomUtil::get_locale();
 			$post_id = 0;
@@ -390,13 +525,16 @@ if ( ! class_exists( 'NgfbUser' ) ) {
 					'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url.'_crawler:pinterest',
 				),
 			);
-			$transients = apply_filters( $this->p->cf['lca'].'_user_cache_transients', $transients, $post_id, $lang, $sharing_url );
+			$transients = apply_filters( $this->p->cf['lca'].'_user_cache_transients', 
+				$transients, $post_id, $lang, $sharing_url );
 			$deleted = $this->p->util->flush_cache_objects( $transients );
+			if ( ! empty( $this->p->options['plugin_cache_info'] ) && $deleted > 0 )
+				$this->p->notice->inf( $deleted.' items removed from the WordPress object and transient caches.', true );
 			return $user_id;
 		}
 
 		protected function get_nonce() {
-			return plugin_basename( __FILE__ );
+			return ( defined( 'NONCE_KEY' ) ? NONCE_KEY : '' ).plugin_basename( __FILE__ );
 		}
 	}
 }

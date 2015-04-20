@@ -27,7 +27,7 @@ if ( ! class_exists( 'NgfbSubmenuSharingTwitter' ) && class_exists( 'NgfbSubmenu
 			$this->form->get_select( 'twitter_order', 
 				range( 1, count( $this->p->admin->submenu['sharing']->website ) ), 'short' ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'JavaScript in', 'short' ).'<td>'.
 				$this->form->get_select( 'twitter_js_loc', $this->p->cf['form']['js_locations'] ).'</td>';
 			}
@@ -45,7 +45,7 @@ if ( ! class_exists( 'NgfbSubmenuSharingTwitter' ) && class_exists( 'NgfbSubmenu
 			$rows[] = $this->p->util->th( 'Tweet Text Source', 'short' ).'<td>'.
 			$this->form->get_select( 'twitter_caption', $this->p->cf['form']['caption_types'] ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'Tweet Text Length', 'short' ).'<td>'.
 				$this->form->get_input( 'twitter_cap_len', 'short' ).' characters or less</td>';
 
@@ -54,27 +54,24 @@ if ( ! class_exists( 'NgfbSubmenuSharingTwitter' ) && class_exists( 'NgfbSubmenu
 				'<td>'.$this->form->get_checkbox( 'twitter_dnt' ).'</td>';
 			}
 
-			$rows[] = $this->p->util->th( 'Add via @username', 'short', null,
-			'Append the website\'s @username to the tweet (see the '.
-			$this->p->util->get_admin_url( 'general#sucom-tab_pub_twitter', 'Twitter' ).
-			' options tab on the General settings page). '.
-			'The website\'s @username will also be displayed and recommended after the Post / Page is shared.' ).
+			$rows[] = $this->p->util->th( 'Add via @username', 'short', null, 
+			'Append the website\'s @username to the tweet (see the '.$this->p->util->get_admin_url( 'general#sucom-tabset_pub-tab_twitter', 'Twitter options tab' ).' on the General settings page). The website\'s @username will be displayed and recommended after the Post / Page is shared.' ).
 			( $this->p->check->aop( 'ngfb' ) ? '<td>'.$this->form->get_checkbox( 'twitter_via' ).'</td>' :
 				'<td class="blank">'.$this->form->get_no_checkbox( 'twitter_via' ).'</td>' );
 
 			$rows[] = $this->p->util->th( 'Recommend Author', 'short', null, 
-			'Recommend following the Author\'s Twitter @username (from their profile) after sharing. 
-			If the \'<em>Add via @username</em>\' option (above) is also checked, the Website\'s @username will be suggested first.' ).
-			( $this->p->check->aop( 'ngfb' ) ? '<td>'.$this->form->get_checkbox( 'twitter_rel_author' ).'</td>' :
+			'Recommend following the Author\'s Twitter @username (from their profile) after sharing. If the \'<em>Add via @username</em>\' option (above) is also checked, the Website\'s @username is suggested first.' ).
+			( $this->p->check->aop( 'ngfb' ) ? 
+				'<td>'.$this->form->get_checkbox( 'twitter_rel_author' ).'</td>' :
 				'<td class="blank">'.$this->form->get_no_checkbox( 'twitter_rel_author' ).'</td>' );
 
 			if ( isset( $this->p->mods['admin']['apikeys'] ) ) {
 				$rows[] = $this->p->util->th( 'Shorten URLs with', 'short', null, 
-				'If you select a URL shortening service here, <strong>you must also enter its API credentials</strong>
-				on the '.$this->p->util->get_admin_url( 'advanced#sucom-tab_plugin_apikeys', 'Advanced settings page' ).'.' ).
-				( $this->p->check->aop( 'ngfb' ) ? '<td>'.$this->form->get_select( 'twitter_shortener', $this->p->cf['form']['shorteners'], 'medium' ).'&nbsp;' :
-				'<td class="blank">'.$this->form->get_hidden( 'twitter_shortener' ).$this->p->cf['form']['shorteners'][$this->p->options['twitter_shortener']].' &mdash; ' ).
-				' using these '.$this->p->util->get_admin_url( 'advanced#sucom-tab_plugin_apikeys', 'API Keys' ).'</td>';
+				'If you select a URL shortening service here, <strong>you must also enter its API credentials</strong> on the '.$this->p->util->get_admin_url( 'advanced#sucom-tabset_plugin-tab_apikeys', 'Advanced settings page' ).'.' ).
+				( $this->p->check->aop( 'ngfb' ) ? 
+					'<td>'.$this->form->get_select( 'twitter_shortener', $this->p->cf['form']['shorteners'], 'medium' ).'&nbsp;' :
+					'<td class="blank">'.$this->form->get_hidden( 'twitter_shortener' ).$this->p->cf['form']['shorteners'][$this->p->options['twitter_shortener']].' &mdash; ' ).
+				' using these '.$this->p->util->get_admin_url( 'advanced#sucom-tabset_plugin-tab_apikeys', 'API Keys' ).'</td>';
 			}
 
 			return $rows;
@@ -167,7 +164,7 @@ if ( ! class_exists( 'NgfbSharingTwitter' ) ) {
 
 			if ( ! array_key_exists( 'related', $atts ) ) {
 				if ( ! empty( $opts['twitter_rel_author'] ) && 
-					$this->p->check->aop( 'ngfb' ) && ! empty( $post ) && $use_post == true )
+					! empty( $post ) && $use_post == true && $this->p->check->aop( 'ngfb' ) )
 						$atts['related'] = preg_replace( '/^@/', '', 
 							get_the_author_meta( $opts['plugin_cm_twitter_name'], $post->author ) );
 				else $atts['related'] = '';

@@ -4,7 +4,7 @@ Plugin Name: WP Shortcode by MyThemeShop
 Plugin URI: http://mythemeshop.com/
 Description: With the vast array of shortcodes, you can quickly and easily build content for your posts and pages and turbocharge your blogging experience.
 Author: MyThemeShop
-Version: 1.3
+Version: 1.4
 Author URI: http://mythemeshop.com/
 */
 
@@ -412,9 +412,9 @@ function mts_clear( $atts ) {
 function mts_tooltip( $atts, $content ) {
     $atts = shortcode_atts(array(
       'content' => '',
-      'direction' => 'n',
+      'gravity' => 'n',
       'fade' => '0'
     ), $atts);
-    return '<span class="wp_shortcodes_tooltip" title="'.esc_attr( $atts['content'] ).'" data-gravity="'.esc_attr( $atts['direction'] ).'" data-fade="'.esc_attr( $atts['fade'] ).'">'.$content.'</span>';
+    return '<span class="wp_shortcodes_tooltip" title="'.esc_attr( $atts['content'] ).'" data-gravity="'.esc_attr( $atts['gravity'] ).'" data-fade="'.esc_attr( $atts['fade'] ).'">'.$content.'</span>';
 }
 ?>

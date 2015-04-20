@@ -21,6 +21,10 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+if (!defined('ABSPATH')) {
+    exit();
+}
+
 require_once(plugin_dir_path(__FILE__) . "class-wpfront-user-role-editor-add-edit.php");
 
 if (!class_exists('WPFront_User_Role_Editor_List')) {
@@ -131,7 +135,7 @@ if (!class_exists('WPFront_User_Role_Editor_List')) {
 
             $count_users = count_users();
             $count_users = $count_users['avail_roles'];
-            
+
             foreach ($roles as $key => $value) {
                 $this->role_data[$key] = array(
                     'role_name' => $key,
@@ -145,7 +149,7 @@ if (!class_exists('WPFront_User_Role_Editor_List')) {
                 if ($this->can_edit()) {
                     $this->role_data[$key]['edit_url'] = $this->edit_url() . $key;
 
-                    if ($key === 'administrator')
+                    if ($key === self::ADMINISTRATOR_ROLE_KEY)
                         $this->role_data[$key]['is_editable'] = FALSE;
                     else {
                         $this->role_data[$key]['is_editable'] = array_key_exists($key, $editable_roles);
@@ -155,7 +159,7 @@ if (!class_exists('WPFront_User_Role_Editor_List')) {
                 if ($this->can_delete()) {
                     $this->role_data[$key]['delete_url'] = $this->delete_url() . $key;
 
-                    if ($key === 'administrator')
+                    if ($key === self::ADMINISTRATOR_ROLE_KEY)
                         $this->role_data[$key]['is_deletable'] = FALSE;
                     else {
                         $this->role_data[$key]['is_deletable'] = array_key_exists($key, $editable_roles);
@@ -288,7 +292,7 @@ if (!class_exists('WPFront_User_Role_Editor_List')) {
 
             $count_users = count_users();
             $count_users = $count_users['avail_roles'];
-            
+
             $count = 0;
             foreach ($role_data as $key => $value) {
                 if(isset($count_users[$key]) && $count_users[$key] > 0) //if (count(get_users(array('role' => $key))) > 0)

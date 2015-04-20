@@ -38,9 +38,10 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 			$lca = $lca === '' ? $this->p->cf['lca'] : $lca;
 			foreach ( $filters as $name => $num ) {
 				$filter = $lca.'_'.$name;
-				$method = 'filter_'.$name;
+				$method = 'filter_'.str_replace( array( '/', '-' ), '_', $name );
 				add_filter( $filter, array( &$class, $method ), $prio, $num );
-				$this->p->debug->log( 'filter for '.$filter.' added', 2 );
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( 'filter for '.$filter.' added', 2 );
 			}
 		}
 
@@ -70,7 +71,6 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 			 */
 			if ( $filter === true )
 				$sizes = apply_filters( $this->p->cf['lca'].'_plugin_image_sizes', $sizes, $post_id );
-			$def_opts = $this->p->opt->get_defaults();
 			$meta_opts = array();
 
 			// allow custom post meta to override the image size options
@@ -84,7 +84,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 				}
 				// on non-singular pages, $post_id may be an object here
 				if ( is_numeric( $post_id ) && $post_id > 0 ) {
-					$this->p->debug->log( 'reading custom meta for post id '.$post_id );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'reading custom meta for post id '.$post_id );
 					$meta_opts = $this->p->mods['util']['postmeta']->get_options( $post_id );
 				} 
 			}
@@ -103,47 +104,40 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 						$size_info[$key] = $meta_opts[$opt_prefix.'_'.$key];
 					elseif ( isset( $this->p->options[$opt_prefix.'_'.$key] ) )		// current plugin settings
 						$size_info[$key] = $this->p->options[$opt_prefix.'_'.$key];
-					else $size_info[$key] = $def_opts[$opt_prefix.'_'.$key];		// default settings value
+					else {
+						if ( ! isset( $def_opts ) )					// only read once if necessary
+							$def_opts = $this->p->opt->get_defaults();
+						$size_info[$key] = $def_opts[$opt_prefix.'_'.$key];		// fallback to default value
+					}
 
 					if ( $key === 'crop' )							// make sure crop is true or false
 						$size_info[$key] = empty( $size_info[$key] ) ? false : true;
 				}
 				if ( $size_info['width'] > 0 && $size_info['height'] > 0 ) {
 					// preserve compatibility with older wordpress versions, use true or false when possible
-					if ( $size_info['crop'] === true && ( $size_info['crop_x'] !== 'center' || $size_info['crop_y'] !== 'center' ) ) {
+					if ( $size_info['crop'] === true && 
+						( $size_info['crop_x'] !== 'center' || $size_info['crop_y'] !== 'center' ) ) {
+
 						global $wp_version;
 						if ( ! version_compare( $wp_version, 3.9, '<' ) )
 							$size_info['crop'] = array( $size_info['crop_x'], $size_info['crop_y'] );
 					}
 					// allow custom function hooks to make changes
 					if ( $filter === true )
-						$size_info = apply_filters( $this->p->cf['lca'].'_size_info_'.$size_info['name'], $size_info, $post_id );
+						$size_info = apply_filters( $this->p->cf['lca'].'_size_info_'.$size_info['name'], 
+							$size_info, $post_id );
 
-					// a reference array for image size labels, used in image size error messages
+					// a lookup array for image size labels, used in image size error messages
 					$this->size_labels[$this->p->cf['lca'].'-'.$size_info['name']] = $size_info['label'];
 
-					add_image_size( $this->p->cf['lca'].'-'.$size_info['name'], $size_info['width'], $size_info['height'], $size_info['crop'] );
+					add_image_size( $this->p->cf['lca'].'-'.$size_info['name'], 
+						$size_info['width'], $size_info['height'], $size_info['crop'] );
 
-					$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$size_info['name'].' '.$size_info['width'].'x'.$size_info['height'].
-						( empty( $size_info['crop'] ) ? '' : ' crop '.$size_info['crop_x'].'/'.$size_info['crop_y'] ).' added' );
-				}
-			}
-		}
-
-		// deprecated function
-		public function add_img_sizes_from_opts( $sizes ) {
-			foreach( $sizes as $opt_prefix => $size_suffix ) {
-				if ( ! empty( $this->p->options[$opt_prefix.'_width'] ) &&
-					! empty( $this->p->options[$opt_prefix.'_height'] ) ) {
-
-					$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$size_suffix.
-						' '.$this->p->options[$opt_prefix.'_width'].'x'.$this->p->options[$opt_prefix.'_height'].
-						( empty( $this->p->options[$opt_prefix.'_crop'] ) ? '' : ' cropped' ).' added', 2 );
-
-					add_image_size( $this->p->cf['lca'].'-'.$size_suffix, 
-						$this->p->options[$opt_prefix.'_width'], 
-						$this->p->options[$opt_prefix.'_height'], 
-						( empty( $this->p->options[$opt_prefix.'_crop'] ) ? false : true ) );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'image size '.$this->p->cf['lca'].'-'.$size_info['name'].' '.
+							$size_info['width'].'x'.$size_info['height'].
+							( empty( $size_info['crop'] ) ? '' : ' crop '.
+								$size_info['crop_x'].'/'.$size_info['crop_y'] ).' added' );
 				}
 			}
 		}
@@ -196,7 +190,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 							'lang:'.$lang.'_post:'.$post_id.'_url:'.$sharing_url.'_crawler:pinterest',
 						),
 					);
-					$transients = apply_filters( $this->p->cf['lca'].'_post_cache_transients', $transients, $post_id, $lang, $sharing_url );
+					$transients = apply_filters( $this->p->cf['lca'].'_post_cache_transients', 
+						$transients, $post_id, $lang, $sharing_url );
 	
 					$objects = array(
 						'SucomWebpage::get_content' => array(
@@ -207,9 +202,11 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 							'lang:'.$lang.'_post:'.$post_id,
 						),
 					);
-					$objects = apply_filters( $this->p->cf['lca'].'_post_cache_objects', $objects, $post_id, $lang, $sharing_url );
+					$objects = apply_filters( $this->p->cf['lca'].'_post_cache_objects', 
+						$objects, $post_id, $lang, $sharing_url );
 	
 					$deleted = $this->flush_cache_objects( $transients, $objects );
+
 					if ( ! empty( $this->p->options['plugin_cache_info'] ) && $deleted > 0 )
 						$this->p->notice->inf( $deleted.' items removed from the WordPress object and transient caches.', true );
 
@@ -230,8 +227,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 						$cache_salt = $group.'('.$val.')';
 						$cache_id = $this->p->cf['lca'].'_'.md5( $cache_salt );
 						if ( delete_transient( $cache_id ) ) {
-							if ( $this->p->debug->is_on() )
-								$this->p->debug->log( 'flushed transient cache salt: '. $cache_salt );
+							if ( $this->p->debug_enabled )
+								$this->p->debug->log( 'flushed transient cache salt: '.$cache_salt );
 							$deleted++;
 						}
 					}
@@ -243,8 +240,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 						$cache_salt = $group.'('.$val.')';
 						$cache_id = $this->p->cf['lca'].'_'.md5( $cache_salt );
 						if ( wp_cache_delete( $cache_id, $group ) ) {
-							if ( $this->p->debug->is_on() )
-								$this->p->debug->log( 'flushed object cache salt: '. $cache_salt );
+							if ( $this->p->debug_enabled )
+								$this->p->debug->log( 'flushed object cache salt: '.$cache_salt );
 							$deleted++;
 						}
 					}
@@ -276,7 +273,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 
 			if ( ! empty( $cache_id ) ) {
 				set_transient( $cache_id, $topics, $this->p->cache->object_expire );
-				$this->p->debug->log( $cache_type.': topics array saved to transient '.$cache_id.' ('.$this->p->cache->object_expire.' seconds)');
+				$this->p->debug->log( $cache_type.': topics array saved to transient '.
+					$cache_id.' ('.$this->p->cache->object_expire.' seconds)');
 			}
 			return $topics;
 		}
@@ -300,8 +298,8 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 			switch ( $option_type ) {
 				case 'at_name':		// twitter-style usernames (prepend with an at)
 					if ( $val !== '' ) {
-						$val = substr( preg_replace( '/[^a-z0-9_]/', '', strtolower( $val ) ), 0, 15 );
-						if ( $val !== '' )
+						$val = substr( preg_replace( '/[^a-zA-Z0-9_]/', '', $val ), 0, 15 );
+						if ( ! empty( $val ) ) 
 							$val = '@'.$val;
 					}
 					break;
@@ -345,6 +343,7 @@ if ( ! class_exists( 'NgfbUtil' ) && class_exists( 'SucomUtil' ) ) {
 						$val = trim( wptexturize( ' '.$val.' ' ) );
 					break;
 				case 'anu_case':	// must be alpha-numeric uppercase (hyphens and periods allowed as well)
+					$val = trim( $val );
 					if ( $val !== '' && preg_match( '/[^A-Z0-9\-\.]/', $val ) ) {
 						$this->p->notice->err( '\''.$val.'\' is not an accepted value for option \''.$key.'\''.' - '.$reset_msg, true );
 						$val = $def_val;

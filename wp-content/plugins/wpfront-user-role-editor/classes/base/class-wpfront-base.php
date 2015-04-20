@@ -22,6 +22,10 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+if (!defined('ABSPATH')) {
+    exit();
+}
+
 require_once(plugin_dir_path(__FILE__) . "class-wpfront-static.php");
 require_once(plugin_dir_path(__FILE__) . "class-wpfront-base-menu.php");
 
@@ -34,6 +38,12 @@ if (!class_exists('WPFront_Base_URE')) {
      * @copyright 2013 WPFront.com
      */
     class WPFront_Base_URE {
+
+        const ADMINISTRATOR_ROLE_KEY = 'administrator';
+        const EDITOR_ROLE_KEY = 'editor';
+        const AUTHOR_ROLE_KEY = 'author';
+        const CONTRIBUTOR_ROLE_KEY = 'contributor';
+        const SUBSCRIBER_ROLE_KEY = 'subscriber';
 
         private $plugin_slug;
         private $options_page_slug;
@@ -63,7 +73,7 @@ if (!class_exists('WPFront_Base_URE')) {
                 add_action('wp_enqueue_scripts', array(&$this, 'enqueue_scripts'));
             }
         }
-        
+
         protected function plugin_dir_suffix() {
             return '';
         }
@@ -111,7 +121,7 @@ if (!class_exists('WPFront_Base_URE')) {
             }
             return $links;
         }
-        
+
         protected function plugin_action_links_file() {
             return $this->plugin_slug . $this->plugin_dir_suffix() . '/' . $this->plugin_slug . '.php';
         }
@@ -191,7 +201,7 @@ if (!class_exists('WPFront_Base_URE')) {
             echo '</div>';
             echo '</div>';
         }
-        
+
         //returns localized string
         public function __($key) {
             return __($key, $this->plugin_slug);

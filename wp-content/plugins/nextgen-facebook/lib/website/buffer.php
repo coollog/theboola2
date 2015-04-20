@@ -28,7 +28,7 @@ if ( ! class_exists( 'NgfbSubmenuSharingBuffer' ) && class_exists( 'NgfbSubmenuS
 				range( 1, count( $this->p->admin->submenu['sharing']->website ) ), 
 					'short' ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'JavaScript in', 'short' ).'<td>'.
 				$this->form->get_select( 'buffer_js_loc', $this->p->cf['form']['js_locations'] ).'</td>';
 			}
@@ -38,20 +38,18 @@ if ( ! class_exists( 'NgfbSubmenuSharingBuffer' ) && class_exists( 'NgfbSubmenuS
 			'horizontal' => 'Horizontal', 'vertical' => 'Vertical' ) ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Image Dimensions', 'short' ).
-			'<td>'.$this->form->get_image_dimensions_input( 'buffer_img', false, true, $this->p->options['plugin_display'] ).'</td>';
+			'<td>'.$this->form->get_image_dimensions_input( 'buffer_img', false, true ).'</td>';
 
 			$rows[] = $this->p->util->th( 'Tweet Text Source', 'short' ).'<td>'.
 			$this->form->get_select( 'buffer_caption', $this->p->cf['form']['caption_types'] ).'</td>';
 
-			if ( $this->p->options['plugin_display'] == 'all' ) {
+			if ( NgfbUser::show_opts( 'all' ) ) {
 				$rows[] = $this->p->util->th( 'Tweet Text Length', 'short' ).'<td>'.
 				$this->form->get_input( 'buffer_cap_len', 'short' ).' characters or less</td>';
 			}
 
 			$rows[] = $this->p->util->th( 'Add via @username', 'short', null,
-			'Append the website\'s @username to the tweet (see the '.
-			$this->p->util->get_admin_url( 'general#sucom-tab_pub_twitter', 'Twitter' ).
-			' options tab on the General settings page).' ).
+			'Append the website\'s @username to the tweet (see the '.$this->p->util->get_admin_url( 'general#sucom-tabset_pub-tab_twitter', 'Twitter options tab' ).' on the General settings page).' ).
 			( $this->p->check->aop() == true ? 
 				'<td>'.$this->form->get_checkbox( 'buffer_via' ).'</td>' :
 				'<td class="blank">'.$this->form->get_no_checkbox( 'buffer_via' ).'</td>' );

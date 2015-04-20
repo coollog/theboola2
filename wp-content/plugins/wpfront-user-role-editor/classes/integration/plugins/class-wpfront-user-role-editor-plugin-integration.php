@@ -22,6 +22,10 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+if (!defined('ABSPATH')) {
+    exit();
+}
+
 if (!class_exists('WPFront_User_Role_Editor_Plugin_Integration')) {
 
     /**
@@ -32,6 +36,8 @@ if (!class_exists('WPFront_User_Role_Editor_Plugin_Integration')) {
      */
     abstract class WPFront_User_Role_Editor_Plugin_Integration {
 
+        const ADMINISTRATOR_ROLE_KEY = WPFront_User_Role_Editor::ADMINISTRATOR_ROLE_KEY;
+        
         private $initialized = FALSE;
 
         protected abstract function init($params);
@@ -44,7 +50,7 @@ if (!class_exists('WPFront_User_Role_Editor_Plugin_Integration')) {
             add_filter("wpfront_user_role_editor_{$slug}_integration_ready", array($this, '_integration_ready'));
             add_filter("wpfront_user_role_editor_{$slug}_translate_capability", array($this, '_translate_capability'));
         }
-        
+
         public function _init($params) {
             $this->initialized = TRUE;
             $this->init($params);

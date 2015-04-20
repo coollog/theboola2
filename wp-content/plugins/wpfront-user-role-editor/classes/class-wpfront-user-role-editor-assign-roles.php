@@ -21,6 +21,9 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+if (!defined('ABSPATH')) {
+    exit();
+}
 
 if (!class_exists('WPFront_User_Role_Editor_Assign_Roles')) {
 
@@ -82,7 +85,7 @@ if (!class_exists('WPFront_User_Role_Editor_Assign_Roles')) {
         public function edit_user_profile($user) {
             if(is_multisite() && is_network_admin())
                 return;
-            
+
             if (!$this->can_assign_roles())
                 return;
 
@@ -113,14 +116,15 @@ if (!class_exists('WPFront_User_Role_Editor_Assign_Roles')) {
         public function edit_user_profile_update($user_id) {
             if(is_multisite() && is_network_admin())
                 return;
-            
+
             if (!$this->can_assign_roles())
                 return;
 
             if ($user_id === wp_get_current_user()->ID)
                 return;
 
-            $user = get_user_to_edit($user_id);
+            //$user = get_user_to_edit($user_id); //fatal error - function not defined.
+            $user = get_userdata($user_id);
             if (empty($user))
                 return;
 
@@ -168,7 +172,7 @@ if (!class_exists('WPFront_User_Role_Editor_Assign_Roles')) {
 
             $this->secondary_roles = array();
             foreach ($roles as $key => $value) {
-                if ($key != 'administrator')
+                if ($key != self::ADMINISTRATOR_ROLE_KEY)
                     $this->secondary_roles[$key] = $value;
             }
         }

@@ -6,9 +6,9 @@ window.wp = window.wp || {};
         Attachments = media.model.Attachments,
         Query = media.model.Query;
     
-   
     
-       
+    
+      
     _.extend( Query.prototype, {
         
         initialize: function( models, options ) {

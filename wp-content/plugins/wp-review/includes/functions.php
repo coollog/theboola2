@@ -180,11 +180,11 @@ function wp_review_get_data( $post_id = null ) {
 				$review .= '<div class="review-total-wrapper"> ';
 							
 							if ( 'percentage' == $type ) {
-								$review .= '<span class="review-total-box"><span itemprop="review">' . $total . '</span> <i class="percentage-icon">%</i>' . '</span>';
+								$review .= '<span class="review-total-box">' . $total . ' <i class="percentage-icon">%</i>' . '</span>';
 							} elseif ( 'point' == $type ) {
-								$review .= '<span class="review-total-box" itemprop="review">' . $total . '/10</span>';
+								$review .= '<span class="review-total-box">' . $total . '/10</span>';
 							} elseif ( 'star' == $type ) {
-								$review .= '<span class="review-total-box" itemprop="review">' . $total . '</span>';
+								$review .= '<span class="review-total-box">' . $total . '</span>';
 
 								$review .= '<div class="review-total-star">';
 									$review .= '<div class="review-result-wrapper">';
@@ -206,18 +206,18 @@ function wp_review_get_data( $post_id = null ) {
 														
 						$review .= '</div>';
 
-						
-						$review .= '<div itemscope="itemscope" itemtype="http://data-vocabulary.org/Review">
-						<meta itemprop="itemreviewed" content="'.__( $heading ).'">
-
-						<span itemprop="rating" itemscope="itemscope"itemtype="http://data-vocabulary.org/Rating">
-						  <meta itemprop="value" content="'.$total.'">
-						  <meta itemprop="best" content="'.$best.'">
-					    </span>
-					    <span itemprop="reviewer" itemscope="itemscope" itemtype="http://data-vocabulary.org/Person">  
-					    	<meta itemprop="name" content="'. get_the_author() .'">
-         				 </span>   
-					</div>';
+						$review .= '<div itemscope itemtype="http://schema.org/Review">
+										<span itemprop="itemReviewed" itemscope itemtype="http://schema.org/Thing">
+											<meta itemprop="name" content="'.__( $heading ).'">
+										</span>
+										<span itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating">
+											<meta itemprop="ratingValue" content="'.$total.'">
+											<meta itemprop="bestRating" content="'.$best.'">
+										</span>
+										<span itemprop="author" itemscope itemtype="http://schema.org/Person">
+											<meta itemprop="name" content="'. get_the_author() .'">
+										</span>
+									</div>';
 					}
 			}
 
@@ -282,13 +282,13 @@ function wp_review_get_data( $post_id = null ) {
 
 					$review .= '</div>';
 					
-                $review .= '<div itemscope itemtype="http://schema.org/Review">  
-						     <div itemprop="reviewRating" itemscope itemtype="http://schema.org/AggregateRating">    
-						        <meta itemprop="ratingValue" content="'.$userTotal.'" /> 
-						        <meta itemprop="bestRating" content="5"/>   
-						        <meta itemprop="ratingCount" content="'.$usersReviewsCount.'" />
-						     </div>
-							</div>';
+					// Is schema needed here?
+					if ( $userTotal !== '0.0' ) {// dont'show if no user ratings
+		                $review .= '<div itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating">
+		                				<meta itemprop="ratingValue" content="'.$userTotal.'" />
+		                				<meta itemprop="reviewCount" content="'.$usersReviewsCount.'" />
+		                			</div>';
+                	}
 
 				}//**END IF USERS ALLOWED TO RATE**
 			

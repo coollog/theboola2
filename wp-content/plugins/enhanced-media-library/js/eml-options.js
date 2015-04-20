@@ -172,6 +172,7 @@
             
             taxonomy_edit_box.find('.wpuxss-eml-admin_filter').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][admin_filter]');	
             taxonomy_edit_box.find('.wpuxss-eml-media_uploader_filter').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][media_uploader_filter]');
+            taxonomy_edit_box.find('.wpuxss-eml-media_popup_taxonomy_edit').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][media_popup_taxonomy_edit]');
             
             $(this).closest('.wpuxss-eml-clone-taxonomy').find('.wpuxss-eml-assigned').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][assigned]');
             $(this).closest('.wpuxss-eml-clone-taxonomy').find('.wpuxss-eml-eml_media').attr('name','wpuxss_eml_taxonomies['+taxonomy_name+'][eml_media]');		

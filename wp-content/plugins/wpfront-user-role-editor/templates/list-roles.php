@@ -29,7 +29,13 @@
  */
 ?>
 
-<?php $this->main->verify_nonce(); ?>
+<?php
+if (!defined('ABSPATH')) {
+    exit();
+}
+
+$this->main->verify_nonce();
+?>
 
 <div class="wrap list-roles">
     <h2>
@@ -38,6 +44,11 @@
         if ($this->can_create()) {
             ?>
             <a href="<?php echo $this->add_new_url(); ?>" class="add-new-h2"><?php echo $this->__('Add New'); ?></a>
+            <?php
+        }
+        if (!empty($_POST['s'])) {
+            ?>
+            <span class="subtitle"><?php echo sprintf($this->__('Search results for "%s"'), $_POST['s']); ?></span>
             <?php
         }
         ?>

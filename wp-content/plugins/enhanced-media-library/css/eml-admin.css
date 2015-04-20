@@ -1,10 +1,6 @@
 
 /* == Attachment Fields == */
 
-body.eml-media-css .compat-item .field input[type="checkbox"] {
-    width: auto;
-}
-
 body.eml-media-css .term-list {
     background-color: #fff;
     border: 1px solid #dfdfdf;
@@ -34,6 +30,19 @@ body.eml-media-css .term-list li input[type=checkbox]:indeterminate:before {
 }
 body.eml-media-css .term-list .children {
     margin: 5px 0 0 20px;
+}
+
+body.eml-media-css .compat-item .eml-tax-label {
+    width: 100%;
+    float: none; 
+    text-align: left;
+}
+body.eml-media-css .compat-item .eml-tax-label span {
+    text-align: left;
+}
+body.eml-media-css .compat-item .eml-tax-field {
+    width: 100%;
+    float: none; 
 }
 
 
@@ -115,6 +124,17 @@ body.eml-media-css .attachments-browser .uploader-inline {
         width: 100%;
     }
 }
+
+
+
+
+
+/* == Filters == */
+
+body.eml-media-css .attachments-browser .media-toolbar-secondary select.attachment-filters {
+    margin-right: 4px;
+}
+
 
 
 
@@ -256,6 +276,20 @@ body.eml-media-css .media-modal.acf-expanded .attachments-browser .media-toolbar
 .wpuxss-eml-button-container-right {
     text-align: right;
     margin: 20px 0 0;
+}
+
+#post-query-submit {
+    margin: 1px 8px 0 5px;
+}
+#eml-reset-filters-query-submit {
+    margin: 1px 8px 0 0;
+}
+
+#reset-all-filters {
+    vertical-align: middle;
+}
+.mode-select #reset-all-filters {
+    margin: 11px 0 0;
 }
 
 

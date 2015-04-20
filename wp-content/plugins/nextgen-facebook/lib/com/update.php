@@ -164,6 +164,9 @@ if ( ! class_exists( 'SucomUpdate' ) ) {
 					$updates->response[$info['base']] = $option_data->update->json_to_wp();
 					$this->p->debug->log( 'update version ('.$option_data->update->version.') is newer than installed version ('.$this->get_installed_version( $lca ).')' );
 					$this->p->debug->log( $updates->response[$info['base']], 5 );
+				} else {
+					$this->p->debug->log( 'installed version is current - no update required' );
+					$this->p->debug->log( $option_data->update->json_to_wp(), 5 );
 				}
 			}
 			return $updates;
@@ -201,15 +204,28 @@ if ( ! class_exists( 'SucomUpdate' ) ) {
 				$option_data->checkedVersion = $this->get_installed_version( $lca );
 				$option_data->update = $this->get_update_data( $lca, $use_cache );
 				$saved = update_site_option( $info['opt_name'], $option_data );
-				if ( $notice === true || $this->p->debug->is_on() ) {
+
+				if ( $notice === true || 
+					( isset( $this->p->debug_enabled ) && $this->p->debug_enabled ) ) {
+
 					if ( $saved === true ) {
-						$this->p->debug->log( 'update information saved to the '.$info['opt_name'].' option' );
+						$this->p->debug->log( 'update information saved in the '.
+							$info['opt_name'].' site option' );
 						$this->p->notice->inf( 'Plugin update information ('.
 							$info['opt_name'].') has been retrieved and saved.', true );
 					} else {
-						$this->p->debug->log( 'failed saving the update information to the '.$info['opt_name'].' option' );
-						$this->p->notice->err( 'WordPress returned an error saving the plugin update information ('.
-							$info['opt_name'].') to the options table.', true );
+						// update_site_option() can return false if existing option value is identical
+						if ( $option_data === get_site_option( $info['opt_name'] ) ) {
+							$this->p->debug->log( 'update information ignored - the '.
+								$info['opt_name'].' site option is current' );
+							$this->p->notice->inf( 'Plugin update information ('.
+								$info['opt_name'].') in the site option is current.', true );
+						} else {
+							$this->p->debug->log( 'failed saving the update information in the '.
+								$info['opt_name'].' site option' );
+							$this->p->notice->err( 'WordPress returned an error saving the plugin update information ('.
+								$info['opt_name'].') to the site options table.', true );
+						}
 					}
 					$this->p->debug->log( $option_data );
 				}
@@ -269,17 +285,17 @@ if ( ! class_exists( 'SucomUpdate' ) ) {
 
 			$plugin_data = null;
 			$result = wp_remote_get( $json_url, $options );
-			if ( is_wp_error( $result ) ) {
-				if ( isset( $this->p->notice ) && is_object( $this->p->notice ) &&
-					isset( $this->p->debug ) && is_object( $this->p->debug ) &&
-					$this->p->debug->is_on() === true ) {
 
-					$this->p->debug->log( 'update error: '.$result->get_error_message().'.' );
+			if ( is_wp_error( $result ) ) {
+
+				if ( isset( $this->p->notice ) && is_object( $this->p->notice ) )
 					$this->p->notice->err( 'Update error &ndash; '.$result->get_error_message().'.' );
-				}
-			} elseif ( isset( $result['response']['code'] ) && 
-				( $result['response']['code'] == 200 ) && 
-				! empty( $result['body'] ) ) {
+
+				if ( isset( $this->p->debug ) && is_object( $this->p->debug ) &&
+					isset( $this->p->debug_enabled ) && $this->p->debug_enabled )
+						$this->p->debug->log( 'update error: '.$result->get_error_message().'.' );
+
+			} elseif ( isset( $result['response']['code'] ) && ( $result['response']['code'] == 200 ) && ! empty( $result['body'] ) ) {
 	
 				if ( ! empty( $result['headers']['x-smp-error'] ) ) {
 					self::$c[$lca]['umsg'] = json_decode( $result['body'] );
@@ -325,6 +341,7 @@ if ( ! class_exists( 'SucomPluginData' ) ) {
 		public $name;
 		public $slug;
 		public $version;
+		public $banners;
 		public $homepage;
 		public $sections;
 		public $download_url;
@@ -357,36 +374,48 @@ if ( ! class_exists( 'SucomPluginData' ) ) {
 		}
 	
 		public function json_to_wp(){
+
 			$fields = array(
 				'name', 
 				'slug', 
 				'version', 
-				'requires', 
 				'tested', 
-				'rating', 
-				'upgrade_notice',
 				'num_ratings', 
-				'downloaded', 
 				'homepage', 
-				'last_updated',
 				'download_url',
-				'author_homepage');
+				'author_homepage',
+				'requires', 
+				'upgrade_notice',
+				'rating', 
+				'downloaded', 
+				'last_updated',
+			);
 			$data = new StdClass;
+
 			foreach ( $fields as $field ) {
 				if ( isset( $this->$field ) ) {
-					if ($field == 'download_url') {
+					if ( $field == 'download_url' ) {
 						$data->download_link = $this->download_url; }
-					elseif ($field == 'author_homepage') {
-						$data->author = sprintf('<a href="%s">%s</a>', $this->author_homepage, $this->author); }
-					else { $data->$field = $this->$field; }
+					elseif ( $field == 'author_homepage' ) {
+						$data->author = strpos( $this->author, '<a href=' ) === false ?
+							sprintf( '<a href="%s">%s</a>', $this->author_homepage, $this->author ) :
+							$this->author;
+					} else { $data->$field = $this->$field; }
 				} elseif ( $field == 'author_homepage' )
 					$data->author = $this->author;
 			}
+
 			if ( is_array( $this->sections ) ) 
 				$data->sections = $this->sections;
 			elseif ( is_object( $this->sections ) ) 
 				$data->sections = get_object_vars( $this->sections );
 			else $data->sections = array( 'description' => '' );
+
+			if ( is_array( $this->banners ) ) 
+				$data->banners = $this->banners;
+			elseif ( is_object( $this->banners ) ) 
+				$data->banners = get_object_vars( $this->banners );
+
 			return $data;
 		}
 	}
