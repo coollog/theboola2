@@ -12,8 +12,12 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 
 	class SucomUtil {
 
-		private static $crawler_name = false;
-		private $urls_found = array();	// array to detect duplicate images, etc.
+		private static $crawler_name = null;
+		private static $plugins_idx = array();	// hash of active site and network plugins
+		private static $site_plugins = array();
+		private static $network_plugins = array();
+
+		private $urls_found = array();		// array to detect duplicate images, etc.
 		private $inline_vars = array(
 			'%%post_id%%',
 			'%%request_url%%',
@@ -36,7 +40,8 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 
 			if ( ! is_object( $obj ) ) {
 				if ( ( $obj = $this->get_post_object( $use_post ) ) === false ) {
-					$this->p->debug->log( 'exiting early: invalid object type' );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'exiting early: invalid object type' );
 					return $str;
 				}
 				$post_id = empty( $obj->ID ) || empty( $obj->post_type ) ? 0 : $obj->ID;
@@ -62,36 +67,66 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			return str_replace( $this->inline_vars, $this->get_inline_vals( $use_post, $obj ), $str );
 		}
 
+		public static function active_plugins( $idx = false ) {
+			if ( empty( self::$plugins_idx ) ) {
+				$all_plugins = self::$site_plugins = get_option( 'active_plugins', array() );
+				if ( is_multisite() ) {
+					self::$network_plugins = array_keys( get_site_option( 'active_sitewide_plugins', array() ) );
+					if ( ! empty( self::$network_plugins ) )
+						$all_plugins = array_merge( self::$site_plugins, self::$network_plugins );
+				}
+				foreach ( $all_plugins as $base )
+					self::$plugins_idx[$base] = true;
+			}
+			if ( $idx !== false ) {
+				if ( isset( self::$plugins_idx ) )
+					return self::$plugins_idx;
+				else return false;
+			} else return self::$plugins_idx;
+		}
+
+		public static function a2aa( $a ) {
+			$aa = array();
+			foreach ( $a as $i )
+				$aa[][] = $i;
+			return $aa;
+		}
+
 		public static function crawler_name( $id = '' ) {
-			if ( self::$crawler_name === false ) {	// optimize perf - only check once
-				$str = $_SERVER['HTTP_USER_AGENT'];
+			// optimize perf - only check once
+			if ( self::$crawler_name === null ) {
+				$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ?
+					strtolower( $_SERVER['HTTP_USER_AGENT'] ) : '';
 				switch ( true ) {
 					// "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
-					case ( strpos( $str, 'facebookexternalhit/' ) === 0 ):
+					case ( strpos( $ua, 'facebookexternalhit/' ) === 0 ):
 						self::$crawler_name = 'facebook';
 						break;
 	
 					// "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-					case ( strpos( $str, 'compatible; Googlebot/' ) !== false ):
+					case ( strpos( $ua, 'compatible; googlebot/' ) !== false ):
 						self::$crawler_name = 'google';
 						break;
 	
 					// "Pinterest/0.1 +http://pinterest.com/"
-					case ( strpos( $str, 'Pinterest/' ) === 0 ):
+					case ( strpos( $ua, 'pinterest/' ) === 0 ):
 						self::$crawler_name = 'pinterest';
 						break;
 	
 					// "Twitterbot/1.0"
-					case ( strpos( $str, 'Twitterbot/' ) === 0 ):
+					case ( strpos( $ua, 'twitterbot/' ) === 0 ):
 						self::$crawler_name = 'twitter';
 						break;
 	
 					// "W3C_Validator/1.3 http://validator.w3.org/services"
-					case ( strpos( $str, 'W3C_Validator/' ) === 0 ):
+					case ( strpos( $ua, 'w3c_validator/' ) === 0 ):
 						self::$crawler_name = 'w3c';
 						break;
+					default:
+						self::$crawler_name = 'unknown';
+						break;
 				}
-			}	
+			}
 			if ( ! empty( $id ) )
 				return $id === self::$crawler_name ? true : false;
 			else return self::$crawler_name;
@@ -198,16 +233,19 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 
 			// complete the url with a protocol name
 			if ( strpos( $url, '//' ) === 0 )
-				$url = empty( $_SERVER['HTTPS'] ) ? 'http:'.$url : 'https:'.$url;
+				$url = empty( $_SERVER['HTTPS'] ) ?
+					'http:'.$url : 'https:'.$url;
 
-			if ( ! preg_match( '/[a-z]+:\/\//i', $url ) )
-				$this->p->debug->log( 'incomplete url given: '.$url );
+			if ( $this->p->debug_enabled && 
+				strpos( $url, '://' ) === false )
+					$this->p->debug->log( 'incomplete url given: '.$url );
 
 			if ( empty( $this->urls_found[$url] ) ) {
 				$this->urls_found[$url] = 1;
 				return true;
 			} else {
-				$this->p->debug->log( 'duplicate url rejected: '.$url ); 
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( 'duplicate url rejected: '.$url ); 
 				return false;
 			}
 		}
@@ -258,9 +296,10 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 				if ( ! empty( $post_id ) ) {
 					if ( isset( $this->p->mods['util']['postmeta'] ) )
 						$url = $this->p->mods['util']['postmeta']->get_options( $post_id, 'sharing_url' );
-					if ( ! empty( $url ) ) 
-						$this->p->debug->log( 'custom postmeta sharing_url = '.$url );
-					else $url = get_permalink( $post_id );
+					if ( ! empty( $url ) ) {
+						if ( $this->p->debug_enabled )
+							$this->p->debug->log( 'custom postmeta sharing_url = '.$url );
+					} else $url = get_permalink( $post_id );
 
 					if ( $add_page && get_query_var( 'page' ) > 1 ) {
 						global $wp_rewrite;
@@ -292,9 +331,10 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 					if ( ! empty( $author->ID ) ) {
 						if ( isset( $this->p->mods['util']['user'] ) )
 							$url = $this->p->mods['util']['user']->get_options( $author->ID, 'sharing_url' );
-						if ( ! empty( $url ) ) 
-							$this->p->debug->log( 'custom user sharing_url = '.$url );
-						else $url = get_author_posts_url( $author->ID );
+						if ( ! empty( $url ) ) {
+							if ( $this->p->debug_enabled )
+								$this->p->debug->log( 'custom user sharing_url = '.$url );
+						} else $url = get_author_posts_url( $author->ID );
 					}
 				} elseif ( is_archive() ) {
 					if ( is_date() ) {
@@ -351,7 +391,8 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 
 		public function fix_relative_url( $url = '' ) {
 			if ( ! empty( $url ) && strpos( $url, '://' ) === false ) {
-				$this->p->debug->log( 'relative url found = '.$url );
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( 'relative url found = '.$url );
 				$prot = empty( $_SERVER['HTTPS'] ) ? 'http:' : 'https:';
 				if ( strpos( $url, '//' ) === 0 )
 					$url = $prot.$url;
@@ -365,7 +406,8 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 					}
 					$url = trailingslashit( $base, false ).$url;
 				}
-				$this->p->debug->log( 'relative url fixed = '.$url );
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( 'relative url fixed = '.$url );
 			}
 			return $url;
 		}
@@ -399,19 +441,20 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			return mb_decode_numericentity( $entity, $convmap, 'UTF-8' );
 		}
 
-		public function limit_text_length( $text, $textlen = 300, $trailing = '', $cleanup = true ) {
+		// limit_text_length() uses PHP's multibyte functions (mb_strlen and mb_substr)
+		public function limit_text_length( $text, $maxlen = 300, $trailing = '', $cleanup = true ) {
 			$charset = get_bloginfo( 'charset' );
 			if ( $cleanup === true )
 				$text = $this->cleanup_html_tags( $text );				// remove any remaining html tags
 			else $text = html_entity_decode( self::decode_utf8( $text ), ENT_QUOTES, $charset );
-			if ( $textlen > 0 ) {
-				if ( strlen( $trailing ) > $textlen )
-					$trailing = substr( $trailing, 0, $textlen );			// trim the trailing string, if too long
-				if ( strlen( $text ) > $textlen ) {
-					$text = substr( $text, 0, $textlen - strlen( $trailing ) );
+			if ( $maxlen > 0 ) {
+				if ( mb_strlen( $trailing ) > $maxlen )
+					$trailing = mb_substr( $trailing, 0, $maxlen );			// trim the trailing string, if too long
+				if ( mb_strlen( $text ) > $maxlen ) {
+					$text = mb_substr( $text, 0, $maxlen - mb_strlen( $trailing ) );
 					$text = trim( preg_replace( '/[^ ]*$/', '', $text ) );		// remove trailing bits of words
 					$text = preg_replace( '/[,\.]*$/', '', $text );			// remove trailing puntuation
-				} else $trailing = '';							// truncate trailing string if text is shorter than limit
+				} else $trailing = '';							// truncate trailing string if text is less than maxlen
 				$text = $text.$trailing;						// trim and add trailing string (if provided)
 			}
 			$text = htmlentities( $text, ENT_QUOTES, $charset, false );			// double_encode = false
@@ -436,11 +479,18 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 					if ( strpos( $text, '<img ' ) !== false &&
 						preg_match_all( '/<img [^>]*alt=["\']([^"\'>]*)["\']/U', 
 							$text, $matches, PREG_PATTERN_ORDER ) ) {
+
 						foreach ( $matches[1] as $alt ) {
-							$alt = 'Image: '.trim( $alt );
-							$alt_text .= ( strpos( $alt, '.' ) + 1 ) === strlen( $alt ) ? $alt.' ' : $alt.'. ';
+							$alt = trim( $alt );
+							if ( ! empty( $alt ) ) {
+								$alt = 'Image: '.$alt;
+								// add a period after the image alt text, if necessary
+								$alt_text .= ( strpos( $alt, '.' ) + 1 ) === strlen( $alt ) ? 
+									$alt.' ' : $alt.'. ';
+							}
 						}
-						$this->p->debug->log( 'img alt text: '.$alt_text );
+						if ( $this->p->debug_enabled )
+							$this->p->debug->log( 'img alt text: '.$alt_text );
 					}
 					$text = $alt_text;
 				} else $text = $text_stripped;
@@ -480,10 +530,16 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 		}
 
 		public function parse_readme( $lca, $expire_secs = 86400 ) {
-			$this->p->debug->args( array( 'lca' => $lca, 'expire_secs' => $expire_secs ) );
+			if ( $this->p->debug_enabled ) {
+				$this->p->debug->args( array( 
+					'lca' => $lca,
+					'expire_secs' => $expire_secs,
+				) );
+			}
 			$plugin_info = array();
 			if ( ! defined( strtoupper( $lca ).'_PLUGINDIR' ) ) {
-				$this->p->debug->log( strtoupper( $lca ).'_PLUGINDIR is undefined and required for readme.txt path' );
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( strtoupper( $lca ).'_PLUGINDIR is undefined and required for readme.txt path' );
 				return $plugin_info;
 			}
 			$readme_txt = constant( strtoupper( $lca ).'_PLUGINDIR' ).'readme.txt';
@@ -496,10 +552,12 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 				$cache_salt = __METHOD__.'(url:'.$readme_url.'_txt:'.$readme_txt.')';
 				$cache_id = $lca.'_'.md5( $cache_salt );
 				$cache_type = 'object cache';
-				$this->p->debug->log( $cache_type.': transient salt '.$cache_salt );
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( $cache_type.': transient salt '.$cache_salt );
 				$plugin_info = get_transient( $cache_id );
 				if ( is_array( $plugin_info ) ) {
-					$this->p->debug->log( $cache_type.': plugin_info retrieved from transient '.$cache_id );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( $cache_type.': plugin_info retrieved from transient '.$cache_id );
 					return $plugin_info;
 				}
 			} else $get_remote = false;	// use local if transient cache is disabled
@@ -530,7 +588,9 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			// save the parsed readme (aka $plugin_info) to the transient cache
 			if ( $this->p->is_avail['cache']['transient'] ) {
 				set_transient( $cache_id, $plugin_info, $this->p->cache->object_expire );
-				$this->p->debug->log( $cache_type.': plugin_info saved to transient '.$cache_id.' ('.$this->p->cache->object_expire.' seconds)');
+				if ( $this->p->debug_enabled )
+					$this->p->debug->log( $cache_type.': plugin_info saved to transient '.$cache_id.
+						' ('.$this->p->cache->object_expire.' seconds)');
 			}
 			return $plugin_info;
 		}
@@ -616,8 +676,8 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			return $deleted;
 		}
 
+		// if post_id 0 then returns values from the plugin settings 
 		public function get_max_nums( $post_id ) {
-			$this->p->debug->args( array( 'post_id' => $post_id ) );
 			$og_max = array();
 			foreach ( array( 'og_vid_max', 'og_img_max' ) as $max_name ) {
 				$num_meta = false;
@@ -626,7 +686,8 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 						$num_meta = $this->p->mods['util']['postmeta']->get_options( $post_id, $max_name );
 				if ( $num_meta !== false ) {
 					$og_max[$max_name] = $num_meta;
-					$this->p->debug->log( 'found custom meta '.$max_name.' = '.$num_meta );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'found custom meta '.$max_name.' = '.$num_meta );
 				} else $og_max[$max_name] = $this->p->options[$max_name];
 			}
 			return $og_max;
@@ -644,10 +705,12 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			$has = count( $arr );
 			if ( $num > 0 ) {
 				if ( $has == $num ) {
-					$this->p->debug->log( 'max values reached ('.$has.' == '.$num.')' );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'max values reached ('.$has.' == '.$num.')' );
 					return true;
 				} elseif ( $has > $num ) {
-					$this->p->debug->log( 'max values reached ('.$has.' > '.$num.') - slicing array' );
+					if ( $this->p->debug_enabled )
+						$this->p->debug->log( 'max values reached ('.$has.' > '.$num.') - slicing array' );
 					$arr = array_slice( $arr, 0, $num );
 					return true;
 				}
@@ -678,32 +741,42 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 				( empty( $tooltip_text ) ? '' : $tooltip_text ).'</p></th>';
 		}
 
-		public function do_tabs( $prefix = '', $tabs = array(), $tab_rows = array(), $args = array() ) {
+		public function do_tabs( $metabox = '', $tabs = array(), $tab_rows = array(), $args = array() ) {
+			$metabox = empty( $metabox ) ? '' : '_'.$metabox;	// must start with an underscore
 			$tab_keys = array_keys( $tabs );
-			$default_tab = reset( $tab_keys );
-			$prefix = empty( $prefix ) ? '' : '_'.$prefix;
-			$class_tabs = 'sucom-metabox-tabs'.( empty( $prefix ) ? '' : ' sucom-metabox-tabs'.$prefix );
-			$class_link = 'sucom-tablink'.( empty( $prefix ) ? '' : ' sucom-tablink'.$prefix );
-			$class_tab = 'sucom-tab';
+			$default_tab = '_'.reset( $tab_keys );			// must start with an underscore
+
+			$class_metabox_tabs = 'sucom-metabox-tabs'.
+				( empty( $metabox ) ? '' : ' sucom-metabox-tabs'.$metabox );
+			$class_link = 'sucom-tablink'.
+				( empty( $metabox ) ? '' : ' sucom-tablink'.$metabox );
+			$class_tabset = 'sucom-tabset';
+
 			extract( array_merge( array(
 				'scroll_to' => '',
 			), $args ) );
+
 			echo '<script type="text/javascript">jQuery(document).ready(function(){ 
-				sucomTabs(\'', $prefix, '\', \'', $default_tab, '\', \'', $scroll_to, '\'); });</script>
-			<div class="', $class_tabs, '">
-			<ul class="', $class_tabs, '">';
-			foreach ( $tabs as $key => $title ) {
-				$href_key = $class_tab.$prefix.'_'.$key;
-				echo '<li class="', $href_key, '"><a class="', $class_link, '" href="#', $href_key, '">', $title, '</a></li>';
+				sucomTabs(\''.$metabox.'\', \''.$default_tab.'\', \''.$scroll_to.'\'); });</script>
+			<div class="'.$class_metabox_tabs.'">
+
+			<ul class="'.$class_metabox_tabs.'">';
+			foreach ( $tabs as $tab => $title ) {
+				$href_key = $class_tabset.$metabox.'-tab_'.$tab;
+				echo '<div class="tab_left">&nbsp;</div><li class="'.$href_key.'"><a 
+					class="'.$class_link.'" href="#'.$href_key.'">'.$title.'</a></li>';
 			}
 			echo '</ul>';
-			foreach ( $tabs as $key => $title ) {
-				$href_key = $class_tab.$prefix.'_'.$key;
-				echo '<div class="display_', $this->p->options['plugin_display'], ' ', $class_tab, 
-					( empty( $prefix ) ? '' : ' '.$class_tab.$prefix ), ' ', $href_key, '">';
+
+			foreach ( $tabs as $tab => $title ) {
+				$href_key = $class_tabset.$metabox.'-tab_'.$tab;
+				// use call_user_func() instead of $classname::show_opts() for PHP 5.2
+				$show_opts = call_user_func( array(  $this->p->cf['lca'].'user', 'show_opts' ) );
+				echo '<div class="display_'.$show_opts.' '.$class_tabset.
+					( empty( $metabox ) ? '' : ' '.$class_tabset.$metabox ).' '.$href_key.'">';
 				echo '<table class="sucom-setting">';
-				if ( ! empty( $tab_rows[$key] ) && is_array( $tab_rows[$key] ) )
-					foreach ( $tab_rows[$key] as $num => $row ) 
+				if ( ! empty( $tab_rows[$tab] ) && is_array( $tab_rows[$tab] ) )
+					foreach ( $tab_rows[$tab] as $num => $row ) 
 						echo '<tr class="alt'.( $num % 2 ).'">'.$row.'</tr>';
 				echo '</table>';
 				echo '</div>';
@@ -733,7 +806,7 @@ if ( ! class_exists( 'SucomUtil' ) ) {
 			$use_post = array_key_exists( 'use_post', $atts ) ? $atts['use_post'] : true;
 			$source_id = $src_name.( empty( $atts['css_id'] ) ? 
 				'' : '-'.preg_replace( '/^'.$this->p->cf['lca'].'-/','', $atts['css_id'] ) );
-			if ( $use_post == true && ! empty( $post ) ) 
+			if ( $use_post == true && isset( $post->ID ) ) 
 				$source_id = $source_id.'-post-'.$post->ID;
 			return $source_id;
 		}

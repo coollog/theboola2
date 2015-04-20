@@ -77,15 +77,29 @@ if ( ! class_exists( 'NgfbRegister' ) ) {
 		}
 
 		private function activate_plugin() {
-			global $wp_version;
 			$lca = $this->p->cf['lca'];
-			$short = $this->p->cf['plugin'][$lca]['short'];
-			if ( version_compare( $wp_version, $this->p->cf['wp']['min_version'], '<' ) ) {
-				require_once( ABSPATH.'wp-admin/includes/plugin.php' );
-				deactivate_plugins( NGFB_PLUGINBASE );
-				error_log( NGFB_PLUGINBASE.' requires WordPress '.$this->p->cf['wp']['min_version'].' or higher ('.$wp_version.' reported).' );
-				wp_die( '<p>'. sprintf( __( 'Sorry, the %1$s plugin cannot be activated &mdash; it requires WordPress version %2$s or newer.', NGFB_TEXTDOM ), 
-					$short, $this->p->cf['wp']['min_version'] ).'</p>' );
+			foreach ( array( 'wp', 'php' ) as $key ) {
+				switch ( $key ) {
+					case 'wp':
+						$label = 'WordPress';
+						global $wp_version;
+						$version = $wp_version;
+						break;
+					case 'php':
+						$label = 'PHP';
+						$version = phpversion();
+						break;
+				}
+				$short = $this->p->cf['plugin'][$lca]['short'];
+				$min_version = $this->p->cf[$key]['min_version'];
+
+				if ( version_compare( $version, $min_version, '<' ) ) {
+					require_once( ABSPATH.'wp-admin/includes/plugin.php' );
+					deactivate_plugins( NGFB_PLUGINBASE );
+					error_log( NGFB_PLUGINBASE.' requires '.$label.' '.$min_version.' or higher ('.$version.' reported).' );
+					wp_die( '<p>The '.$short.' plugin cannot be activated &mdash; '.
+						$short.' requires '.$label.' version '.$min_version.' or newer.</p>' );
+				}
 			}
 			set_transient( $lca.'_activation_redirect', true, 60 * 60 );
 			$this->p->set_config();
@@ -93,6 +107,11 @@ if ( ! class_exists( 'NgfbRegister' ) ) {
 		}
 
 		private function deactivate_plugin() {
+			// clear all cached objects and transients
+			$deleted_cache = $this->p->util->delete_expired_file_cache( true );
+			$deleted_transient = $this->p->util->delete_expired_transients( true );
+
+			// disable the cron update check
 			$slug = $this->p->cf['plugin'][$this->p->cf['lca']]['slug'];
 			wp_clear_scheduled_hook( 'plugin_updates-'.$slug );
 		}
@@ -107,16 +126,22 @@ if ( ! class_exists( 'NgfbRegister' ) ) {
 			if ( ! defined( 'NGFB_META_NAME' ) )
 				define( 'NGFB_META_NAME', '_'.$cf['lca'].'_meta' );
 
+			if ( ! defined( 'NGFB_PREF_NAME' ) )
+				define( 'NGFB_PREF_NAME', '_'.$cf['lca'].'_pref' );
+
 			$slug = $cf['plugin'][$cf['lca']]['slug'];
 			$opts = get_option( NGFB_OPTIONS_NAME );
 
 			if ( empty( $opts['plugin_preserve'] ) ) {
 				delete_option( NGFB_OPTIONS_NAME );
 				delete_post_meta_by_key( NGFB_META_NAME );
+				foreach ( array( NGFB_META_NAME, NGFB_PREF_NAME ) as $meta_key )
+					foreach ( get_users( array( 'meta_key' => $meta_key ) ) as $user )
+						delete_user_option( $user->ID, $meta_key );
 				NgfbUser::delete_metabox_prefs();
 			}
 
-			// delete update related options
+			// delete update options
 			delete_option( 'external_updates-'.$slug );
 			delete_option( $cf['lca'].'_umsg' );
 			delete_option( $cf['lca'].'_utime' );

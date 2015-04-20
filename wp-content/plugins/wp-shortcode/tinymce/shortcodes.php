@@ -349,17 +349,13 @@ $shortcodes = array(
     "tooltip" => array(
         "self-closing" => false,
         "atts" => array(
-            "content" => __("Tooltip content", "wpshortcode"),
-            "direction" => "n",
+            "content" => "Tooltip content",
+            "gravity" => "n",
             "fade" => "0"
-        ),
-        "att_labels" => array(
-            "content" => __("Tooltip content", "wpshortcode"),
-            "direction" => __("Direction (cardinal)", "wpshortcode"),
         ),
         "label" => __("Tooltip", "wpshortcode"),
         "content" => __("Trigger text", "wpshortcode"),
-        "description" => __("Add a tooltip that appears on hover. Possible values for direction: nw | n | ne | w | e | sw | s | se", "wpshortcode")
+        "description" => __("Add a tooltip that appears on hover. Possible values for direction(Cardinal) of bubble: nw | n | ne | w | e | sw | s | se", "wpshortcode")
     )
 );
 echo "<script type=\"text/javascript\">var shortcodes = ".json_encode($shortcodes).";</script>";

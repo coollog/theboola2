@@ -1,4 +1,5 @@
 window.wp = window.wp || {};
+window.eml = { l10n: {} };
 
 ( function( $, _ ) {
     
@@ -7,8 +8,17 @@ window.wp = window.wp || {};
         original = {};
  
    
+
+   
+    _.extend( eml.l10n, wpuxss_eml_media_views_l10n );
+
+
+
     
-    
+    /**
+     * media.controller.Library
+     *
+     */
     _.extend( media.controller.Library.prototype, {    
         
         uploading: function( attachment ) {            
@@ -36,7 +46,7 @@ window.wp = window.wp || {};
                     Filters.$el.val( 'all' ).change();
                 }
                 
-                $.each( wpuxss_eml_taxonomies, function( taxonomy, values ) {
+                $.each( eml.l10n.taxonomies, function( taxonomy, values ) {
                             
                     taxFilter = content.get().toolbar.get( taxonomy+'-filter' );
                     
@@ -46,14 +56,14 @@ window.wp = window.wp || {};
                 });
             }
             
-            if ( wp_version < '4.0' || this.get( 'autoSelect' ) ) {                
+            if ( eml.l10n.wp_version < '4.0' || this.get( 'autoSelect' ) ) {                
                 
                 if ( wp.Uploader.queue.length == 1 && selection.length ) {
                     selection.reset(); 
                 }
                 selection.add( attachment );
-                selection.trigger( 'selection:unsingle' );
-                selection.trigger( 'selection:single' );
+                selection.trigger( 'selection:unsingle', selection.model, selection );
+                selection.trigger( 'selection:single', selection.model, selection );
             }    
         }
     });
@@ -61,6 +71,10 @@ window.wp = window.wp || {};
     
     
     
+    /**
+     * media.view.AttachmentCompat
+     *
+     */
     var newEvents = { 'click input'  : 'preSave' };
     _.extend( newEvents, media.view.AttachmentCompat.prototype.events );
     
@@ -77,7 +91,8 @@ window.wp = window.wp || {};
         
         render: function() {
     
-            var compat = this.model.get('compat');
+            var compat = this.model.get('compat'),
+                $compat_el = this.$el;
     
             if ( ! compat || ! compat.item ) {
                 return;
@@ -90,6 +105,24 @@ window.wp = window.wp || {};
             this.views.detach();
             this.$el.html( compat.item );
             this.views.render();
+            
+            
+            // TODO: find a better solution
+            if ( this.controller.isModeActive( 'select' ) && 'edit-attachment' != this.controller.state().get('id') ) {
+                
+                $.each( eml.l10n.compat_taxonomies_to_hide, function( id, taxonomy ) {
+                    $compat_el.find( '.compat-field-'+taxonomy ).remove();
+                });
+            }
+
+            
+            // TODO: find a better solution
+            $.each( eml.l10n.compat_taxonomies, function( id, taxonomy ) {
+                
+                $compat_el.find( '.compat-field-'+taxonomy+' .label' ).addClass( 'eml-tax-label' );
+                $compat_el.find( '.compat-field-'+taxonomy+' .field' ).addClass( 'eml-tax-field' );
+            });
+
             return this;
         }
     });
@@ -97,15 +130,32 @@ window.wp = window.wp || {};
     
     
     
+    /**
+     * media.view.AttachmentFilters
+     */    
     _.extend( media.view.AttachmentFilters.prototype, {
         
         change: function() {
             
             var filter = this.filters[ this.el.value ],
-                selection = this.controller.state().get( 'selection' );
+                selection = this.controller.state().get( 'selection' ),
+                
+                $mainFilter = this.controller.$el.find( 'select#media-attachment-filters' ),
+                $dateFilter = this.controller.$el.find( 'select#media-attachment-date-filters' ),
+                $taxFilters = this.controller.$el.find( 'select.eml-attachment-filters' ),
+                resetFilterButton = this.controller.content.get().toolbar.get( 'resetFilterButton' );
+
                 
             if ( filter && selection.length && ! wp.Uploader.queue.length ) {
                 selection.reset();
+            }
+            
+            if ( ! $mainFilter.prop( 'selectedIndex' ) && 
+                 ! $dateFilter.prop( 'selectedIndex' ) && 
+                 ! $taxFilters.filter( function() { return $(this).prop( 'selectedIndex' ) } ).get().length ) {
+                resetFilterButton.model.set( 'disabled', true )
+            } else {
+                resetFilterButton.model.set( 'disabled', false )
             }
             
             if ( filter ) {
@@ -116,7 +166,66 @@ window.wp = window.wp || {};
     
     
     
+
+    /**
+     * media.view.AttachmentFilters.All 
+     */    
+    original.AttachmentFilters = {
+        
+        All: {
+            createFilters: media.view.AttachmentFilters.All.prototype.createFilters
+        }
+    };
     
+    _.extend( media.view.AttachmentFilters.All.prototype, {
+        
+        createFilters: function() {
+            
+            original.AttachmentFilters.All.createFilters.apply( this, arguments );
+            
+            _.each( this.filters, function( filter, key ) 
+            {
+                filter.props['uncategorized'] = null;
+            })
+            
+            this.filters.uncategorized = {
+                text:  eml.l10n.uncategorized,
+                props: {
+                    uploadedTo    : null,
+                    uncategorized : true,
+                    status        : null,
+                    type          : null,
+                    orderby       : 'date',
+                    order         : 'DESC'
+                },
+                priority: 60
+            };
+        },
+        
+        change: function() {
+            
+            var filter = this.filters[ this.el.value ],
+                $taxFilters = this.controller.$el.find( 'select.eml-attachment-filters' );
+            
+            media.view.AttachmentFilters.prototype.change.apply( this, arguments );
+            
+            if ( filter && filter.props.uncategorized &&
+                 $taxFilters.filter( function() { return $(this).prop( 'selectedIndex' ) } ).get().length ) {
+                     
+                $taxFilters.each( function() {
+                    if ( this.value != 'all' )
+                        $( this ).val( 'all' ).change();
+                });
+            }
+        }
+    });
+    
+    
+  
+    
+    /**
+     * media.view.AttachmentFilters.Taxonomy 
+     */    
     media.view.AttachmentFilters.Taxonomy = media.view.AttachmentFilters.extend({
         
         id: function() {
@@ -142,23 +251,78 @@ window.wp = window.wp || {};
                     
                 filters[ term_id ] = {
                     text: term_name,
-                    priority: key+2
+                    props: {},
+                    priority: key+4
                 };
                 
-                filters[term_id]['props'] = {};
                 filters[term_id]['props'][self.options.taxonomy] = term_id;
+                
+                // TODO: for future sorting inside a ctegory
+                // filters[term_id]['props']['orderby'] = 'menuOrder';
+                // filters[term_id]['props']['order'] = 'ASC';
             });
             
             filters.all = {
-                text: self.options.termListTitle,
+                text: eml.l10n.filter_by + self.options.singularName,
+                props: {},
                 priority: 1
             };
             
-            filters['all']['props'] = {};
             filters['all']['props'][self.options.taxonomy] = null;
+            
+            // TODO: for future sorting inside a ctegory
+            // filters['all']['props']['orderby'] = 'menuOrder';
+            // filters['all']['props']['order'] = 'ASC';
+            
+            filters.in = {
+                text: '— ' + eml.l10n.in + self.options.pluralName + ' —',
+                props: {},
+                priority: 2
+            };
+            
+            filters['in']['props'][self.options.taxonomy] = 'in';
+            
+            filters.not_in = {
+                text: '— ' + eml.l10n.not_in + self.options.singularName + ' —',
+                props: {},
+                priority: 3
+            };
+            
+            filters['not_in']['props'][self.options.taxonomy] = 'not_in';
     
             this.filters = filters;
+        },
+        
+        change: function() {
+            
+            var filter = this.filters[ this.el.value ],
+                $mainFilter = this.controller.$el.find( 'select#media-attachment-filters' );
+            
+            media.view.AttachmentFilters.prototype.change.apply( this, arguments );
+            
+            if ( filter && 1 != filter.priority && 'uncategorized' == $mainFilter.val() ) {
+                $mainFilter.val( 'all' ).change();
+            }
         }
+    });
+    
+    
+    
+    media.view.Button.resetFilters = media.view.Button.extend({
+        
+        id: 'reset-all-filters',
+
+        click: function( event ) {
+            
+            if ( '#' === this.attributes.href ) {
+				event.preventDefault();
+			}
+            
+            $.each( $('select.attachment-filters'), function() {
+                if ( this.value != 'all' )
+                    $(this).val( 'all' ).change();
+            });
+		}
     });
     
     
@@ -188,10 +352,11 @@ window.wp = window.wp || {};
             var $browser = this.$el,
                 $attachments = $browser.find('.attachments'),
                 $uploader = $browser.find('.uploader-inline'),
-                $toolbar = $browser.find('.media-toolbar');
+                $toolbar = $browser.find('.media-toolbar'),
+                $messages = $('.eml-media-css .updated:visible, .eml-media-css .error:visible');
             
             
-            if ( wp_version < '4.0' ) {
+            if ( eml.l10n.wp_version < '4.0' ) {
                 
                 if ( 'absolute' == $attachments.css( 'position' ) && 
                     $browser.height() > $toolbar.height() + 20 ) { 
@@ -230,9 +395,20 @@ window.wp = window.wp || {};
                 $toolbar.find('.media-toolbar-secondary').prepend( $toolbar.find('.instructions') );
             }
     
-            if ( this.controller.isModeActive( 'eml-grid' ) ) {
+            if ( this.controller.isModeActive( 'eml-grid' ) ) 
+            {
+                var messagesOuterHeight = 0;
                 
-                $browser.css( 'top', $toolbar.outerHeight() + 20 + 'px' );
+                if ( ! _.isUndefined( $messages ) ) 
+                {
+                    $messages.each( function() {
+                        messagesOuterHeight += $(this).outerHeight( true );
+                    });
+                    
+                    messagesOuterHeight = messagesOuterHeight ? messagesOuterHeight - 20 : 0;
+                } 
+                
+                $browser.css( 'top', $toolbar.outerHeight() + messagesOuterHeight + 20 + 'px' );
                 $toolbar.css( 'top', - $toolbar.outerHeight() - 30 + 'px' );
             }
         },
@@ -245,10 +421,34 @@ window.wp = window.wp || {};
             
             original.AttachmentsBrowser.createToolbar.apply( this, arguments );
             
-            if ( -1 !== $.inArray( filters, [ 'uploaded', 'all', 'eml' ] ) ) {
+            if ( -1 !== $.inArray( this.options.filters, [ 'uploaded', 'all' ] ) || parseInt( eml.l10n.force_filters ) ) 
+            {
+                this.toolbar.set( 'filtersLabel', new media.view.Label({
+                    value: l10n.filterByType,
+                    attributes: {
+                        'for':  'media-attachment-filters'
+                    },
+                    priority:   -80
+                }).render() );
+
+                if ( 'uploaded' === this.options.filters ) {
+                    this.toolbar.set( 'filters', new media.view.AttachmentFilters.Uploaded({
+                        controller: this.controller,
+                        model:      this.collection.props,
+                        priority:   -80
+                    }).render() );
+                } else {
+                    Filters = new media.view.AttachmentFilters.All({
+                        controller: this.controller,
+                        model:      this.collection.props,
+                        priority:   -80
+                    });
+
+                    this.toolbar.set( 'filters', Filters.render() );
+                }
     
-                if ( wp_version >= '4.0' && ! this.controller.isModeActive( 'grid' ) ) {
-                
+                if ( eml.l10n.wp_version >= '4.0' ) 
+                {
                     this.toolbar.set( 'dateFilterLabel', new media.view.Label({
                         value: l10n.filterByDate,
                         attributes: {
@@ -262,22 +462,37 @@ window.wp = window.wp || {};
                         priority: -75
                     }).render() );
                 }
-            }
-            
-            $.each( wpuxss_eml_taxonomies, function( taxonomy, values ) {
-                
-                if ( values.term_list && -1 !== $.inArray( filters, [ 'uploaded', 'all', 'eml' ] ) ) {
+
+                $.each( eml.l10n.taxonomies, function( taxonomy, values ) {
                     
-                    self.toolbar.set( taxonomy+'-filter', new media.view.AttachmentFilters.Taxonomy({
-                        controller: self.controller,
-                        model: self.collection.props,
-                        priority: -80 + 10*i++,
-                        taxonomy: taxonomy, 
-                        termList: values.term_list,
-                        termListTitle: values.list_title,
-                    }).render() );
-                }
-            });
+                    if ( values.term_list ) {
+                        
+                        self.toolbar.set( taxonomy+'FilterLabel', new media.view.Label({
+                            value: eml.l10n.filter_by + values.singular_name,
+                            attributes: {
+                                'for':  'media-attachment-' + taxonomy + '-filters',
+                            },
+                            priority: -70 + i++
+                        }).render() );
+                        self.toolbar.set( taxonomy+'-filter', new media.view.AttachmentFilters.Taxonomy({
+                            controller: self.controller,
+                            model: self.collection.props,
+                            priority: -70 + i++,
+                            taxonomy: taxonomy, 
+                            termList: values.term_list,
+                            singularName: values.singular_name,
+                            pluralName: values.plural_name
+                        }).render() );
+                    }
+                });
+                
+                this.toolbar.set( 'resetFilterButton', new media.view.Button.resetFilters({
+                    controller: this.controller,
+                    text: eml.l10n.reset_filters,
+                    disabled: true,
+                    priority: -70 + i
+                }).render() );
+            }
         }
     });
     
@@ -319,6 +534,5 @@ window.wp = window.wp || {};
     
     // TODO: move to the PHP side
     $('body').addClass('eml-media-css');
-    
-    
+
 })( jQuery, _ );

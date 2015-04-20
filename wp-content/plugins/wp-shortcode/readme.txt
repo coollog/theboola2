@@ -4,7 +4,7 @@ Creator's website link: http://mythemeshop.com/
 Tags: shortcodes, shortcode, shortcodes list, toggle shortcode, buttons, google map shortcode, youtube shortcode, viemo shortcode, alert shortcode, notification shortcode, column shortcodes
 Requires at least: 3.0.1
 Tested up to: 4.1
-Stable tag: 1.3
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,11 @@ Please disable all plugins and check if shortcode plugin is working properly. Th
 7. Google Maps Shortcode
 
 == Changelog ==
+
+= 1.4 =
+* Complete revamp of notification and button shortcode design.
+* Removed unnecessary images.
+* Optimized CSS code.
 
 = 1.3 =
 * Added Tooltip shortcode

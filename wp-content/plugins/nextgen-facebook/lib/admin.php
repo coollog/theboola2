@@ -29,12 +29,12 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 			$this->set_objects();
 
 			add_action( 'admin_init', array( &$this, 'register_setting' ) );
-			add_action( 'admin_menu', array( &$this, 'add_admin_menus' ), -20 );
-			add_action( 'admin_menu', array( &$this, 'add_admin_settings' ), -10 );
+			add_action( 'admin_menu', array( &$this, 'add_admin_menus' ), NGFB_ADD_MENU_PRIORITY );
+			add_action( 'admin_menu', array( &$this, 'add_admin_settings' ), NGFB_ADD_SETTINGS_PRIORITY );
 			add_filter( 'plugin_action_links', array( &$this, 'add_plugin_action_links' ), 10, 2 );
 
 			if ( is_multisite() ) {
-				add_action( 'network_admin_menu', array( &$this, 'add_network_admin_menus' ), -20 );
+				add_action( 'network_admin_menu', array( &$this, 'add_network_admin_menus' ), NGFB_ADD_MENU_PRIORITY );
 				add_action( 'network_admin_edit_'.NGFB_SITE_OPTIONS_NAME, array( &$this, 'save_site_options' ) );
 				add_filter( 'network_admin_plugin_action_links', array( &$this, 'add_plugin_action_links' ), 10, 2 );
 			}
@@ -45,7 +45,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		private function set_objects() {
 			$menus = array( 
 				'submenu', 
-				'setting'	// setting must be last to extend submenu/advanced
+				'setting'	// setting must be last to extend submenu/advanced.php
 			);
 			if ( is_multisite() )
 				$menus[] = 'sitesubmenu';
@@ -68,7 +68,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 			$this->form = new SucomForm( $this->p, NGFB_OPTIONS_NAME, $this->p->options, $def_opts );
 		}
 
-		protected function &get_form_ref() {	// return reference
+		protected function &get_form_reference() {	// returns a reference
 			return $this->form;
 		}
 
@@ -85,10 +85,10 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 
 		public function add_admin_settings() {
 			foreach ( $this->p->cf['*']['lib']['setting'] as $id => $name ) {
+				$parent_slug = 'options-general.php';
 				if ( array_key_exists( $id, $this->submenu ) ) {
-					$parent_slug = 'options-general.php';
 					$this->submenu[$id]->add_submenu_page( $parent_slug );
-				}
+				} else $this->add_submenu_page( $parent_slug, $id, $name );
 			}
 		}
 
@@ -120,7 +120,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		protected function add_menu_page( $menu_slug ) {
 			global $wp_version;
 			$short_aop = $this->p->cf['plugin'][$this->p->cf['lca']]['short'].
-				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : '' );
+				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : ' Free' );
 
 			// add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 			$this->pagehook = add_menu_page( 
@@ -130,23 +130,31 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				$menu_slug, 
 				array( &$this, 'show_form_page' ), 
 				( version_compare( $wp_version, 3.8, '<' ) ? null : 'dashicons-share' ),
-				NGFB_MENU_PRIORITY
+				NGFB_MENU_ORDER
 			);
 			add_action( 'load-'.$this->pagehook, array( &$this, 'load_form_page' ) );
 		}
 
 		protected function add_submenu_page( $parent_slug, $menu_id = '', $menu_name = '' ) {
 			$short_aop = $this->p->cf['plugin'][$this->p->cf['lca']]['short'].
-				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : '' );
+				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : ' Free' );
 
-			if ( strpos ( $menu_id, 'separator' ) !== false ) {
-				$menu_title = '<div style="z-index:999;padding:2px 0;margin:0;cursor:default;border-bottom:1px dotted;color:#666;" onclick="return false;"></div>';
+			if ( strpos( $menu_id, 'separator' ) !== false ) {
+				$menu_title = '<div style="z-index:999;
+					padding:2px 0;
+					margin:0;
+					cursor:default;
+					border-bottom:1px dotted;
+					color:#666;" onclick="return false;">'.
+						$menu_name.'</div>';
 				$menu_slug = '';
 				$page_title = '';
 				$function = '';
 			} else {
-				$menu_title = empty ( $menu_name ) ? $this->menu_name : $menu_name;
-				$menu_slug = $this->p->cf['lca'].'-'.( empty( $menu_id ) ? $this->menu_id : $menu_id );
+				$menu_title = empty( $menu_name ) ? 
+					$this->menu_name : $menu_name;
+				$menu_slug = $this->p->cf['lca'].'-'.
+					( empty( $menu_id ) ? $this->menu_id : $menu_id );
 				$page_title = $short_aop.' : '.$menu_title;
 				$function = array( &$this, 'show_form_page' );
 			}
@@ -163,7 +171,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				add_action( 'load-'.$this->pagehook, array( &$this, 'load_form_page' ) );
 		}
 
-		// display a settings link on the main plugins page
+		// add links on the main plugins page
 		public function add_plugin_action_links( $links, $file ) {
 			// only add links when filter is called for this plugin
 			if ( $file == NGFB_PLUGINBASE ) {
@@ -175,15 +183,14 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				$urls = $this->p->cf['plugin'][$this->p->cf['lca']]['url'];
 				array_push( $links, '<a href="'.$urls['faq'].'">'.__( 'FAQ', NGFB_TEXTDOM ).'</a>' );
 				array_push( $links, '<a href="'.$urls['notes'].'">'.__( 'Notes', NGFB_TEXTDOM ).'</a>' );
-				if ( $this->p->is_avail['aop'] ) {
-					array_push( $links, '<a href="'.$urls['pro_support'].'">'.__( 'Support', NGFB_TEXTDOM ).'</a>' );
-					if ( ! $this->p->check->aop() ) 
+				if ( $this->p->check->aop() ) 
+					array_push( $links, '<a href="'.$urls['pro_support'].'">'.__( 'Pro Support', NGFB_TEXTDOM ).'</a>' );
+				else {
+					array_push( $links, '<a href="'.$urls['wp_support'].'">'.__( 'Support Forum', NGFB_TEXTDOM ).'</a>' );
+					if ( $this->p->is_avail['aop'] ) 
 						array_push( $links, '<a href="'.$urls['purchase'].'">'.__( 'Purchase License', NGFB_TEXTDOM ).'</a>' );
-				} else {
-					array_push( $links, '<a href="'.$urls['wp_support'].'">'.__( 'Forum', NGFB_TEXTDOM ).'</a>' );
-					array_push( $links, '<a href="'.$urls['purchase'].'">'.__( 'Purchase Pro', NGFB_TEXTDOM ).'</a>' );
+					else array_push( $links, '<a href="'.$urls['purchase'].'">'.__( 'Purchase Pro', NGFB_TEXTDOM ).'</a>' );
 				}
-
 			}
 			return $links;
 		}
@@ -202,9 +209,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 			$opts = array_merge( $this->p->options, $opts );
 			$opts = $this->p->opt->sanitize( $opts, $def_opts );
 			$opts = apply_filters( $this->p->cf['lca'].'_save_options', $opts, NGFB_OPTIONS_NAME );
-			$this->p->notice->inf( __( 'Plugin settings have been updated.', NGFB_TEXTDOM ).' '.
-				sprintf( __( 'Wait %d seconds for cache objects to expire (default) or use the \'Clear All Cache\' button.', NGFB_TEXTDOM ), 
-					$this->p->options['plugin_object_cache_exp'] ), true );
+			$this->p->notice->inf( __( 'Plugin settings have been updated.', NGFB_TEXTDOM ).' '.sprintf( __( 'Wait %d seconds for cache objects to expire (default) or use the \'Clear All Cache(s)\' button.', NGFB_TEXTDOM ), $this->p->options['plugin_object_cache_exp'] ), true );
 			return $opts;
 		}
 
@@ -249,7 +254,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 
 		public function load_form_page() {
 			wp_enqueue_script( 'postbox' );
-			$upload_dir = wp_upload_dir();	// returns assoc array with path info
+			$upload_dir = wp_upload_dir();		// returns assoc array with path info
 			$user_opts = $this->p->mods['util']['user']->get_options();
 
 			if ( ! empty( $_GET['action'] ) ) {
@@ -267,27 +272,32 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 							break;
 
 						case 'clear_all_cache': 
+							wp_cache_flush();
 							$deleted_cache = $this->p->util->delete_expired_file_cache( true );
 							$deleted_transient = $this->p->util->delete_expired_transients( true );
-							wp_cache_flush();
+							$this->p->notice->inf( __( $this->p->cf['uca'].' cached files, transient cache, and the WordPress object cache have all been cleared.', NGFB_TEXTDOM ) );
 
-							if ( function_exists( 'w3tc_pgcache_flush' ) ) 		// w3 total cache
+							if ( function_exists( 'w3tc_pgcache_flush' ) ) {	// w3 total cache
 								w3tc_pgcache_flush();
-							elseif ( function_exists( 'wp_cache_clear_cache' ) )	// wp super cache
+								$this->p->notice->inf( __( 'W3 Total Cache has been cleared as well.', NGFB_TEXTDOM ) );
+							}
+							if ( function_exists( 'wp_cache_clear_cache' ) ) {	// wp super cache
 								wp_cache_clear_cache();
-
-							$this->p->notice->inf( __( 'Cached files, WP object cache, transient cache, and any additional caches, '.
-								'like APC, Memcache, Xcache, W3TC, Super Cache, etc. have all been cleared.', NGFB_TEXTDOM ) );
+								$this->p->notice->inf( __( 'WP Super Cache has been cleared as well.', NGFB_TEXTDOM ) );
+							}
+							if ( isset( $GLOBALS['zencache'] ) ) {		// zencache
+								$GLOBALS['zencache']->wipe_cache();
+								$this->p->notice->inf( __( 'ZenCache has been cleared as well.', NGFB_TEXTDOM ) );
+							}
 							break;
 
 						case 'clear_metabox_prefs': 
 							NgfbUser::delete_metabox_prefs( get_current_user_id() );
 							break;
 
-						case 'change_display_options': 
-							if ( isset( $this->p->cf['form']['display_options'][$_GET['display_options']] ) )
-								$this->p->options['plugin_display'] = $_GET['display_options'];
-							$this->p->opt->save_options( NGFB_OPTIONS_NAME, $this->p->options );
+						case 'change_show_options': 
+							if ( isset( $this->p->cf['form']['show_options'][$_GET['show_opts']] ) )
+								NgfbUser::save_pref( array( 'show_opts' => $_GET['show_opts'] ) );
 							break;
 					}
 				}
@@ -304,20 +314,22 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 					array( &$this, 'show_metabox_purchase' ), $this->pagehook, 'side' );
 				add_filter( 'postbox_classes_'.$this->pagehook.'_'.$this->pagehook.'_purchase', 
 					array( &$this, 'add_class_postbox_highlight_side' ) );
-				$this->p->mods['util']['user']->reset_metabox_prefs( $this->pagehook, array( 'purchase' ), null, 'side', true );
+				$this->p->mods['util']['user']->reset_metabox_prefs( $this->pagehook, 
+					array( 'purchase' ), null, 'side', true );
 			}
-
-			add_meta_box( $this->pagehook.'_help', __( 'Help and Support', NGFB_TEXTDOM ), 
-				array( &$this, 'show_metabox_help' ), $this->pagehook, 'side' );
 
 			add_meta_box( $this->pagehook.'_info', __( 'Version Information', NGFB_TEXTDOM ), 
 				array( &$this, 'show_metabox_info' ), $this->pagehook, 'side' );
 
-			add_meta_box( $this->pagehook.'_status_gpl', __( 'Standard Features', NGFB_TEXTDOM ), 
+			add_meta_box( $this->pagehook.'_status_gpl', __( 'Basic / Common Features', NGFB_TEXTDOM ), 
 				array( &$this, 'show_metabox_status_gpl' ), $this->pagehook, 'side' );
 
-			add_meta_box( $this->pagehook.'_status_pro', __( 'Pro Features', NGFB_TEXTDOM ), 
+			add_meta_box( $this->pagehook.'_status_pro', __( 'Pro Version Features', NGFB_TEXTDOM ), 
 				array( &$this, 'show_metabox_status_pro' ), $this->pagehook, 'side' );
+
+			add_meta_box( $this->pagehook.'_help', __( 'Help and Support', NGFB_TEXTDOM ), 
+				array( &$this, 'show_metabox_help' ), $this->pagehook, 'side' );
+
 		}
 
 		public function show_single_page() {
@@ -350,32 +362,22 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 
 		public function show_form_page() {
 			$short_aop = $this->p->cf['plugin'][$this->p->cf['lca']]['short'].
-				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : '' );
+				( $this->p->check->aop( $this->p->cf['lca'] ) ? ' Pro' : ' Free' );
 
-			if ( $this->menu_id !== 'contact' )		// the "settings" page displays its own error messages
+			if ( ! $this->is_setting( $this->menu_id ) )	// the "setting" pages display their own error messages
 				settings_errors( NGFB_OPTIONS_NAME );	// display "error" and "updated" messages
+
 			$this->set_form();				// define form for side boxes and show_form_content()
-			if ( $this->p->debug->is_on() ) {
+
+			if ( $this->p->debug_enabled ) {
 				$this->p->debug->show_html( print_r( $this->p->is_avail, true ), 'available features' );
-				$this->p->debug->show_html( print_r( $this->p->check->get_active(), true ), 'active plugins' );
+				$this->p->debug->show_html( print_r( NgfbUtil::active_plugins(), true ), 'active plugins' );
 				$this->p->debug->show_html( null, 'debug log' );
 			}
 			?>
-			<div class="wrap" id="<?php echo $this->pagehook; ?>">
-				<h2>
-					<?php 
-					$this->show_follow_icons();
-					echo '<div class="display_options_info">';
-					echo '<strong>'.$this->p->cf['form']['display_options'][$this->p->options['plugin_display']].'</strong>';
 
-					$next_key = SucomUtil::next_key( $this->p->options['plugin_display'], $this->p->cf['form']['display_options'] );
-					if ( $next_key !== false )
-						echo ' | <a href="'.wp_nonce_url( $this->p->util->get_admin_url( '?action=change_display_options&display_options='.$next_key ),
-							$this->get_nonce(), NGFB_NONCE ).'">Display '.$this->p->cf['form']['display_options'][$next_key].'</a>';
-					echo '</div>';
-					echo $short_aop.' &ndash; '.$this->menu_name;
-					?>
-				</h2>
+			<div class="wrap" id="<?php echo $this->pagehook; ?>">
+				<h2><?php $this->show_follow_icons(); echo $short_aop.' &ndash; '.$this->menu_name; ?></h2>
 				<div id="poststuff" class="metabox-holder has-right-sidebar">
 					<div id="side-info-column" class="inner-sidebar">
 						<?php do_meta_boxes( $this->pagehook, 'side', null ); ?>
@@ -412,18 +414,27 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		}
 
 		protected function show_form_content() {
-			if ( ! empty( $this->p->cf['*']['lib']['submenu'][$this->menu_id] ) ) {
-				echo '<form name="'.$this->p->cf['lca'].'" id="setting" method="post" action="options.php">';
-				echo $this->form->get_hidden( 'options_version', $this->p->cf['opt']['version'] );
-				echo $this->form->get_hidden( 'plugin_version', $this->p->cf['plugin'][$this->p->cf['lca']]['version'] );
+
+			if ( $this->is_submenu( $this->menu_id ) ||
+				$this->is_setting( $this->menu_id ) ) {
+
+				echo '<form name="'.$this->p->cf['lca'].'" 
+					id="'.$this->p->cf['lca'].'_settings_form" 
+					action="options.php" method="post">';
+
 				settings_fields( $this->p->cf['lca'].'_setting' ); 
 
-			} elseif ( ! empty( $this->p->cf['*']['lib']['sitesubmenu'][$this->menu_id] ) ) {
-				echo '<form name="'.$this->p->cf['lca'].'" id="setting" method="post" action="edit.php?action='.NGFB_SITE_OPTIONS_NAME.'">';
+			} elseif ( $this->is_sitesubmenu( $this->menu_id ) ) {
+
+				echo '<form name="'.$this->p->cf['lca'].'" 
+					id="'.$this->p->cf['lca'].'_settings_form" 
+					action="edit.php?action='.NGFB_SITE_OPTIONS_NAME.'" method="post">';
 				echo '<input type="hidden" name="page" value="'.$this->menu_id.'">';
-				echo $this->form->get_hidden( 'options_version', $this->p->cf['opt']['version'] );
-				echo $this->form->get_hidden( 'plugin_version', $this->p->cf['plugin'][$this->p->cf['lca']]['version'] );
 			}
+
+			echo $this->form->get_hidden( 'options_version', $this->p->cf['opt']['version'] );
+			echo $this->form->get_hidden( 'plugin_version', $this->p->cf['plugin'][$this->p->cf['lca']]['version'] );
+
 			wp_nonce_field( $this->get_nonce(), NGFB_NONCE );
 			wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 			wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
@@ -490,11 +501,8 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 						'style="background-color:#0f0;"';
 				}
 
-				//$update_info = class_exists( 'SucomUpdate' ) ?
-				//	SucomUpdate::get_option( $lca ) : false;
-	
 				echo '<tr><td colspan="2"><h4>'.$info['short'].
-					( $this->p->check->aop( $lca ) ? ' Pro' : '' ).'</h4></td></tr>';
+					( $this->p->check->aop( $lca ) ? ' Pro' : ' Free' ).'</h4></td></tr>';
 				echo '<tr><th class="side">'.__( 'Installed', NGFB_TEXTDOM ).':</th>
 					<td class="side_version" '.$installed_style.'>'.$installed_version.'</td></tr>';
 				echo '<tr><th class="side">'.__( 'Stable', NGFB_TEXTDOM ).':</th>
@@ -503,13 +511,17 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 					<td class="side_version">'.$latest_version.'</td></tr>';
 				echo '<tr><td colspan="2" id="latest_notice"><p>'.$latest_notice.'</p>'.
 					'<p><a href="'.$changelog_url.'" target="_blank">'.
-						sprintf( __( 'View the %s changelog...', NGFB_TEXTDOM ), $info['short'] ).'</a></p></td></tr>';
+						sprintf( __( 'View %s changelog...', NGFB_TEXTDOM ), $info['short'] ).'</a></p></td></tr>';
 			}
 			echo '</table>';
 		}
 
 		public function show_metabox_status_gpl() {
 			$metabox = 'status';
+			$plugin_count = 0;
+			foreach ( $this->p->cf['plugin'] as $lca => $info )
+				if ( isset( $info['lib']['gpl'] ) )
+					$plugin_count++;
 			echo '<table class="sucom-setting" style="margin-bottom:10px;">';
 			/*
 			 * GPL version features
@@ -517,7 +529,7 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 			foreach ( $this->p->cf['plugin'] as $lca => $info ) {
 				if ( ! isset( $info['lib']['gpl'] ) )
 					continue;
-				if ( $lca === $this->p->cf['lca'] )
+				if ( $lca === $this->p->cf['lca'] )	// features for this plugin
 					$features = array(
 						'Debug Messages' => array( 'classname' => 'SucomDebug' ),
 						'Non-Persistant Cache' => array( 'status' => $this->p->is_avail['cache']['object'] ? 'on' : 'rec' ),
@@ -528,7 +540,8 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 				else $features = array();
 				$features = apply_filters( $lca.'_'.$metabox.'_gpl_features', $features, $lca, $info );
 				if ( ! empty( $features ) ) {
-					echo '<tr><td><h4>'.$this->p->cf['plugin'][$lca]['short'].'</h4></td></tr>';
+					if ( $plugin_count > 1 )
+						echo '<tr><td><h4>'.$this->p->cf['plugin'][$lca]['short'].'</h4></td></tr>';
 					$this->show_plugin_status( $features );
 				}
 			}
@@ -537,6 +550,10 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 
 		public function show_metabox_status_pro() {
 			$metabox = 'status';
+			$plugin_count = 0;
+			foreach ( $this->p->cf['plugin'] as $lca => $info )
+				if ( isset( $info['lib']['pro'] ) )
+					$plugin_count++;
 			echo '<table class="sucom-setting" style="margin-bottom:10px;">';
 			/*
 			 * Pro version features
@@ -553,15 +570,15 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 						$off = $this->p->is_avail[$sub][$id] ? 'rec' : 'off';
 						$features[$name] = array( 
 							'status' => class_exists( $lca.'pro'.$sub.$id ) ? ( $aop ? 'on' : $off ) : $off,
-							'tooltip' => 'If the '.$name.' plugin is detected, '.$this->p->cf['plugin'][$lca]['short'].' Pro '.
-								'will load an integration modules to provide additional support and features for '.$name.'.',
+							'tooltip' => 'If the '.$name.' plugin is detected, '.$this->p->cf['plugin'][$lca]['short'].' Pro will load an integration modules to provide additional support and features for '.$name.'.',
 							'td_class' => $aop ? '' : 'blank',
 						);
 					}
 				}
 				$features = apply_filters( $lca.'_'.$metabox.'_pro_features', $features, $lca, $info );
 				if ( ! empty( $features ) ) {
-					echo '<tr><td><h4>'.$this->p->cf['plugin'][$lca]['short'].' Pro</h4></td></tr>';
+					if ( $plugin_count > 1 )
+						echo '<tr><td><h4>'.$this->p->cf['plugin'][$lca]['short'].'</h4></td></tr>';
 					$this->show_plugin_status( $features );
 				}
 			}
@@ -617,20 +634,22 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 			foreach ( $this->p->cf['plugin'] as $lca => $info ) {
 				if ( empty( $info['version'] ) )	// filter out extensions that are not installed
 					continue;
-				echo '<p><strong>Need Help with '.$info['short'].
-					( $this->p->check->aop( $lca ) ? ' Pro' : '' ).'?</strong></p>';
+				echo '<p><strong>'.$info['short'].
+					( $this->p->check->aop( $lca ) ? ' Pro' : ' Free' ).' Help</strong></p>';
 				echo '<ul>';
 				if ( ! empty( $info['url']['faq'] ) ) {
-					echo '<li>Review the <a href="'.$info['url']['faq'].'" target="_blank">FAQs</a>';
+					echo '<li>Review <a href="'.$info['url']['faq'].'" target="_blank">FAQs</a>';
 					if ( ! empty( $info['url']['notes'] ) )
 						echo ' and <a href="'.$info['url']['notes'].'" target="_blank">Notes</a>';
 					echo '</li>';
 				}
 				if ( $this->p->check->aop( $lca ) && 
 					! empty( $info['url']['pro_ticket'] ) )
-						echo '<li><a href="'.$info['url']['pro_ticket'].'" target="_blank">Submit a Support Ticket</a></li>';
+						echo '<li><a href="'.$info['url']['pro_ticket'].'" 
+							target="_blank">Submit a Support Ticket</a></li>';
 				elseif ( ! empty( $info['url']['wp_support'] ) )
-					echo '<li><a href="'.$info['url']['wp_support'].'" target="_blank">Post in the Support Forum</a></li>';
+					echo '<li><a href="'.$info['url']['wp_support'].'" 
+						target="_blank">Post in Support Forum</a></li>';
 				echo '</ul>';
 			}
 			echo '</td></tr></table>';
@@ -648,20 +667,27 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		protected function get_submit_buttons( $submit_text = '', $class = 'submit-buttons' ) {
 			if ( empty( $submit_text ) ) 
 				$submit_text = __( 'Save All Changes', NGFB_TEXTDOM );
-			$action_buttons = '<input type="submit" class="button-primary" value="'.$submit_text.'" />';
+
+			$show_opts_next = SucomUtil::next_key( NgfbUser::show_opts(), $this->p->cf['form']['show_options'] );
+			$show_opts_text = 'Show '.$this->p->cf['form']['show_options'][$show_opts_next];
+			$show_opts_url = $this->p->util->get_admin_url( '?action=change_show_options&show_opts='.$show_opts_next );
+
+			$action_buttons = '<input type="submit" class="button-primary" value="'.$submit_text.'" />'.
+				$this->form->get_button( $show_opts_text, 'button-secondary button-highlight', null, 
+					wp_nonce_url( $show_opts_url, $this->get_nonce(), NGFB_NONCE ) ).'<br/>';
 
 			if ( empty( $this->p->cf['*']['lib']['sitesubmenu'][$this->menu_id] ) )	// don't show on the network admin pages
-				$action_buttons .= $this->form->get_button( __( 'Clear All Cache', NGFB_TEXTDOM ), 
+				$action_buttons .= $this->form->get_button( __( 'Clear All Cache(s)', NGFB_TEXTDOM ), 
 					'button-secondary', null, wp_nonce_url( $this->p->util->get_admin_url( '?action=clear_all_cache' ),
 						$this->get_nonce(), NGFB_NONCE ) );
 
 			if ( ! empty( $this->p->options['plugin_'.$this->p->cf['lca'].'_tid'] ) )
-				$action_buttons .= $this->form->get_button( __( 'Update Check', NGFB_TEXTDOM ), 
+				$action_buttons .= $this->form->get_button( __( 'Check for Pro Update', NGFB_TEXTDOM ), 
 					'button-secondary', null, wp_nonce_url( $this->p->util->get_admin_url( '?action=check_for_updates' ), 
 						$this->get_nonce(), NGFB_NONCE ) );
 
 			if ( empty( $this->p->cf['*']['lib']['sitesubmenu'][$this->menu_id] ) )	// don't show on the network admin pages
-				$action_buttons .= $this->form->get_button( __( 'Reset Metaboxes', NGFB_TEXTDOM ), 
+				$action_buttons .= $this->form->get_button( __( 'Reset Metabox Layout', NGFB_TEXTDOM ), 
 					'button-secondary', null, wp_nonce_url( $this->p->util->get_admin_url( '?action=clear_metabox_prefs' ),
 						$this->get_nonce(), NGFB_NONCE ) );
 
@@ -669,7 +695,19 @@ if ( ! class_exists( 'NgfbAdmin' ) ) {
 		}
 
 		protected function get_nonce() {
-			return plugin_basename( __FILE__ );
+			return ( defined( 'NONCE_KEY' ) ? NONCE_KEY : '' ).plugin_basename( __FILE__ );
+		}
+
+		private function is_setting( $menu_id ) {
+			return isset( $this->p->cf['*']['lib']['setting'][$menu_id] ) ? true : false;
+		}
+
+		private function is_submenu( $menu_id ) {
+			return isset( $this->p->cf['*']['lib']['submenu'][$menu_id] ) ? true : false;
+		}
+
+		private function is_sitesubmenu( $menu_id ) {
+			return isset( $this->p->cf['*']['lib']['sitesubmenu'][$menu_id] ) ? true : false;
 		}
 	}
 }

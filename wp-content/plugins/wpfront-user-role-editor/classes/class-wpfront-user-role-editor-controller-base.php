@@ -22,6 +22,10 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+if (!defined('ABSPATH')) {
+    exit();
+}
+
 if (!class_exists('WPFront_User_Role_Editor_Controller_Base')) {
 
     /**
@@ -32,6 +36,8 @@ if (!class_exists('WPFront_User_Role_Editor_Controller_Base')) {
      */
     class WPFront_User_Role_Editor_Controller_Base {
 
+        const ADMINISTRATOR_ROLE_KEY = WPFront_User_Role_Editor::ADMINISTRATOR_ROLE_KEY;
+        
         protected $main;
         protected $page_hook;
         protected $multisite = FALSE;
@@ -88,9 +94,9 @@ if (!class_exists('WPFront_User_Role_Editor_Controller_Base')) {
                 $s .= '<p><a target="_blank" href="http://wpfront.com/support/">' . $this->__('Support') . '</a></p>';
                 $s .= '<p><a target="_blank" href="https://wordpress.org/support/view/plugin-reviews/wpfront-user-role-editor">' . $this->__('Review') . '</a></p>';
                 $s .= '<p><a target="_blank" href="http://wpfront.com/contact/">' . $this->__('Contact') . '</a></p>';
-                
-                
-                
+
+
+
                 $screen->set_help_sidebar($s);
             }
         }
@@ -154,9 +160,13 @@ if (!class_exists('WPFront_User_Role_Editor_Controller_Base')) {
         public function set_default_url() {
             return admin_url('admin.php') . '?page=' . WPFront_User_Role_Editor_List::MENU_SLUG . '&nonce=' . wp_create_nonce($this->list_url()) . '&set_default_role=';
         }
-        
+
         public function settings_url() {
             return admin_url('admin.php') . '?page=' . WPFront_User_Role_Editor_Options::MENU_SLUG;
+        }
+        
+        public function login_redirect_url() {
+            return admin_url('admin.php') . '?page=' . WPFront_User_Role_Editor_Login_Redirect::MENU_SLUG;
         }
 
         public function cache_add($key, $data) {

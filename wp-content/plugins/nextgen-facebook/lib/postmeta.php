@@ -13,7 +13,6 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 	/*
 	 * This class is extended by gpl/util/postmeta.php or pro/util/postmeta.php
 	 * and the class object is created as $this->p->mods['util']['postmeta']
-	 *
 	 */
 	class NgfbPostmeta {
 
@@ -28,10 +27,10 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 				add_action( 'admin_head', array( &$this, 'set_header_tags' ) );
 				add_action( 'add_meta_boxes', array( &$this, 'add_metaboxes' ) );
 				add_action( 'save_post', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY );
-				add_action( 'save_post', array( &$this, 'flush_cache' ), 100 );
+				add_action( 'save_post', array( &$this, 'flush_cache' ), NGFB_META_CACHE_PRIORITY );
 				add_action( 'save_post', array( &$this, 'check_head' ), 1000 );
 				add_action( 'edit_attachment', array( &$this, 'save_options' ), NGFB_META_SAVE_PRIORITY );
-				add_action( 'edit_attachment', array( &$this, 'flush_cache' ), 100 );
+				add_action( 'edit_attachment', array( &$this, 'flush_cache' ), NGFB_META_CACHE_PRIORITY );
 			}
 		}
 
@@ -46,25 +45,38 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 				add_meta_box( NGFB_META_NAME, 'Social Settings', array( &$this, 'show_metabox_postmeta' ), $post_type->name, 'advanced', 'high' );
 		}
 
+		// hooked into the admin_head action
 		public function set_header_tags() {
-			if ( ! empty( $this->header_tags ) )
+			if ( ! empty( $this->header_tags ) )	// only set header tags once
 				return;
+
 			if ( ( $obj = $this->p->util->get_post_object() ) === false ||
 				empty( $obj->post_type ) )
 					return;
+
 			$screen = get_current_screen();
-			$page = $screen->id;
-			if ( strpos( $page, 'edit-' ) !== false )	// check for post/page edititing lists
-				return;
+			$this->p->debug->log( 'screen id = '.$screen->id );
+			// check for post/page/media edititing lists
+			if ( strpos( $screen->id, 'edit-' ) !== false ||
+				$screen->id === 'upload' )
+					return;
+
 			$post_id = empty( $obj->ID ) ? 0 : $obj->ID;
 			if ( isset( $obj->post_status ) && $obj->post_status !== 'auto-draft' ) {
+
 				$post_type = get_post_type_object( $obj->post_type );
 				$add_metabox = empty( $this->p->options[ 'plugin_add_to_'.$post_type->name ] ) ? false : true;
 				if ( apply_filters( $this->p->cf['lca'].'_add_metabox_postmeta', $add_metabox, $post_id ) === true ) {
+
 					$this->p->util->add_plugin_image_sizes( $post_id );
 					do_action( $this->p->cf['lca'].'_admin_postmeta_header', $post_type->name, $post_id );
 					$this->header_tags = $this->p->head->get_header_array( $post_id );
-					$this->post_info = $this->p->head->get_post_info( $this->header_tags );
+					$this->post_info = $this->p->head->extract_post_info( $this->header_tags );
+
+					if ( $obj->post_status == 'publish' &&
+						! empty( $this->p->options['plugin_check_head'] ) &&
+						empty( $this->post_info['og_image']['og:image'] ) )
+							$this->p->notice->err( 'A Facebook / Open Graph image meta tag for this webpage could not be generated. Facebook and other social websites require at least one image meta tag to render their shared content correctly.', true );
 				}
 			}
 		}
@@ -82,11 +94,11 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 			$metabox = 'meta';
 			$tabs = apply_filters( $this->p->cf['lca'].'_'.$metabox.'_tabs', 
 				array( 
-					'header' => 'Title and Descriptions', 
+					'header' => 'Title / Descriptions', 
 					'media' => 'Priority Media', 
 					'preview' => 'Social Preview',
-					'tags' => 'Header Preview',
-					'tools' => 'Validation Tools'
+					'tags' => 'Head Tags',
+					'validate' => 'Validate'
 				)
 			);
 
@@ -107,30 +119,31 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 					if ( get_post_status( $post_info['id'] ) !== 'auto-draft' ) {
 						$rows = $this->get_rows_social_preview( $this->form, $post_info );
 					} else $rows[] = '<td><p class="centered">Save a draft version or publish the '.
-						$post_info['ptn'].' to display the Social Preview.</p></td>';
+						$post_info['ptn'].' to display the open graph social preview.</p></td>';
 					break;
 
 				case 'meta-tags':	
 					if ( get_post_status( $post_info['id'] ) !== 'auto-draft' ) {
 						foreach ( $this->header_tags as $m ) {
-							if ( ! empty( $m[0] ) )
+							if ( ! empty( $m[1] ) )
 								$rows[] = '<th class="xshort">'.$m[1].'</th>'.
 								'<th class="xshort">'.$m[2].'</th>'.
 								'<td class="short">'.( isset( $m[6] ) ? '<!-- '.$m[6].' -->' : '' ).$m[3].'</td>'.
 								'<th class="xshort">'.$m[4].'</th>'.
-								'<td class="wide">'.( strpos( $m[5], 'http' ) === 0 ? '<a href="'.$m[5].'">'.$m[5].'</a>' : $m[5] ).'</td>';
+								'<td class="wide">'.( strpos( $m[5], 'http' ) === 0 ? 
+									'<a href="'.$m[5].'">'.$m[5].'</a>' : $m[5] ).'</td>';
 						}
 						sort( $rows );
 					} else $rows[] = '<td><p class="centered">Save a draft version or publish the '.
-						$post_info['ptn'].' to display the Header Preview.</p></td>';
+						$post_info['ptn'].' to display the header preview.</p></td>';
 					break; 
 
-				case 'meta-tools':
+				case 'meta-validate':
 					if ( get_post_status( $post_info['id'] ) === 'publish' ||
 						get_post_type( $post_info['id'] ) === 'attachment' ) {
 
-						$rows = $this->get_rows_validation_tools( $this->form, $post_info );
-					} else $rows[] = '<td><p class="centered">The Validation Tools will be available when the '
+						$rows = $this->get_rows_validation_links( $this->form, $post_info );
+					} else $rows[] = '<td><p class="centered">The validation links will be available when the '
 						.$post_info['ptn'].' is published with public visibility.</p></td>';
 					break; 
 			}
@@ -171,7 +184,7 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 			if ( empty( $image_preview_html ) )
 				$image_preview_html = '<div class="preview_img" style="'.$div_style.'">'.$msgs['not_found'].'</div>';
 
-			$rows[] = $this->p->util->th( 'Open Graph Social Preview Example', 'medium', 'postmeta-social-preview' ).
+			$rows[] = $this->p->util->th( 'Open Graph Example', 'medium', 'postmeta-social-preview' ).
 			'<td style="background-color:#e9eaed;">
 			<div class="preview_box" style="width:'.( $max_width + 40 ).'px;">
 				<div class="preview_box" style="width:'.$max_width.'px;">
@@ -187,37 +200,29 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 			return $rows;
 		}
 
-		public function get_rows_validation_tools( &$form, &$post_info ) {
+		public function get_rows_validation_links( &$form, &$post_info ) {
 			$rows = array();
 
-			$rows[] = $this->p->util->th( 'Facebook Debugger' ).'<td class="validate"><p>Refresh the Facebook cache and 
-			validate the Open Graph / Rich Pin meta tags for this '.$post_info['ptn'].'. Facebook, Pinterest, LinkedIn, Google+,
-			and most social websites use these Open Graph meta tags. The Facebook Debugger remains the most stable and reliable 
-			method to verify Open Graph meta tags.</p>
-			<p><strong>Please note that you may have to click the "Debug" and "Fetch new scrape Information" button a few times 
-			to refresh Facebook\'s cache</strong>.</p></td>
+			$rows[] = $this->p->util->th( 'Facebook Debugger' ).'<td class="validate"><p>Refresh the Facebook cache and validate the Open Graph / Rich Pin meta tags for this '.$post_info['ptn'].'. Facebook, Pinterest, LinkedIn, Google+, and most social websites use Open Graph meta tags. The Facebook Debugger remains the most stable and reliable method to verify Open Graph meta tags.</p>
+			
+			<p><strong>You may have to click the "Fetch new scrape Information" button several times to refresh Facebook\'s cache</strong>.</p></td>
 
 			<td class="validate">'.$form->get_button( 'Validate Open Graph', 'button-secondary', null, 
 			'https://developers.facebook.com/tools/debug/og/object?q='.urlencode( $this->p->util->get_sharing_url( $post_info['id'] ) ), true ).'</td>';
 
-			$rows[] = $this->p->util->th( 'Google Structured Data Testing Tool' ).'<td class="validate"><p>Verify that Google can 
-			correctly parse your structured data markup (meta tags, Schema, and Microdata markup) and display it in search results.
-			Most of the information extracted from the meta tags can be found in the rdfa-node / property section of the results.</p></td>
+			$rows[] = $this->p->util->th( 'Google Structured Data Testing Tool' ).'<td class="validate"><p>Verify that Google can correctly parse your structured data markup (meta tags, Schema, Microdata, and social JSON-LD markup) for Google Search and Google+.</p></td>
 
 			<td class="validate">'.$form->get_button( 'Validate Data Markup', 'button-secondary', null, 
-			'http://www.google.com/webmasters/tools/richsnippets?q='.urlencode( $this->p->util->get_sharing_url( $post_info['id'] ) ), true ).'</td>';
+			'https://developers.google.com/structured-data/testing-tool/?url='.urlencode( $this->p->util->get_sharing_url( $post_info['id'] ) ), true ).'</td>';
 
-			$rows[] = $this->p->util->th( 'Pinterest Rich Pin Validator' ).'<td class="validate"><p>Validate the Open Graph / Rich Pin 
-			meta tags, and apply to have them displayed on Pinterest.</p></td>
+			$rows[] = $this->p->util->th( 'Pinterest Rich Pin Validator' ).'<td class="validate"><p>Validate the Open Graph / Rich Pin meta tags, and apply to have them displayed on Pinterest.</p></td>
 
 			<td class="validate">'.$form->get_button( 'Validate Rich Pins', 'button-secondary', null, 
 			'http://developers.pinterest.com/rich_pins/validator/?link='.urlencode( $this->p->util->get_sharing_url( $post_info['id'] ) ), true ).'</td>';
 
-			$rows[] = $this->p->util->th( 'Twitter Card Validator' ).'<td class="validate"><p>The Twitter Card Validator does not 
-			accept query arguments &ndash; copy-paste the following sharing URL into the validation input field. 
-			To enable the display of Twitter Card information in tweets, you must submit a URL for each type of card you provide
-			(Summary, Summary with Large Image, Photo, Gallery, Player, and/or Product card).</p>'.
-			'<p>'.$form->get_input_for_copy( $this->p->util->get_sharing_url( $post_info['id'] ), 'wide' ).'</p></td>
+			$rows[] = $this->p->util->th( 'Twitter Card Validator' ).'<td class="validate"><p>The Twitter Card Validator does not accept query arguments &ndash; copy-paste the following sharing URL into the validation input field. To enable the display of Twitter Card information in tweets, you must submit a URL for each type of card you provide (Summary, Summary with Large Image, Photo, Gallery, Player, and/or Product card).</p>
+			
+			<p>'.$form->get_input_for_copy( $this->p->util->get_sharing_url( $post_info['id'] ), 'wide' ).'</p></td>
 
 			<td class="validate">'.$form->get_button( 'Validate Twitter Card', 'button-secondary', null, 
 			'https://dev.twitter.com/docs/cards/validation/validator', true ).'</td>';
@@ -291,11 +296,8 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 						foreach( $metas[$tag] as $m ) {
 							foreach( $types as $t ) {
 								if ( isset( $m[$t] ) && $m[$t] !== 'generator' && 
-									! empty( $this->p->options['add_'.$tag.'_'.$t.'_'.$m[$t]] ) ) {
-									$this->p->notice->err( 'Possible conflict detected - 
-									Your theme or another plugin is adding a <code>'.$tag.' '.$t.'="'.$m[$t].'"</code>
-									HTML tag to the head section of this webpage.', true );
-								}
+									! empty( $this->p->options['add_'.$tag.'_'.$t.'_'.$m[$t]] ) )
+										$this->p->notice->err( 'Possible conflict detected - your theme or another plugin is adding a <code>'.$tag.' '.$t.'="'.$m[$t].'"</code> HTML tag to the head section of this webpage.', true );
 							}
 						}
 					}
@@ -305,7 +307,7 @@ if ( ! class_exists( 'NgfbPostmeta' ) ) {
 		}
 
 		protected function get_nonce() {
-			return plugin_basename( __FILE__ );
+			return ( defined( 'NONCE_KEY' ) ? NONCE_KEY : '' ).plugin_basename( __FILE__ );
 		}
 	}
 }

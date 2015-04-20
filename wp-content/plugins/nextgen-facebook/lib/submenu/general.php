@@ -21,8 +21,10 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 
 		protected function add_meta_boxes() {
 			// add_meta_box( $id, $title, $callback, $post_type, $context, $priority, $callback_args );
-			add_meta_box( $this->pagehook.'_opengraph', 'All Publishers / Open Graph Settings', array( &$this, 'show_metabox_opengraph' ), $this->pagehook, 'normal' );
-			add_meta_box( $this->pagehook.'_publishers', 'Publisher Specific Settings', array( &$this, 'show_metabox_publishers' ), $this->pagehook, 'normal' );
+			add_meta_box( $this->pagehook.'_opengraph', 'All Social Websites (Open Graph)',
+				array( &$this, 'show_metabox_opengraph' ), $this->pagehook, 'normal' );
+			add_meta_box( $this->pagehook.'_publishers', 'Specific Social Websites and Publishers',
+				array( &$this, 'show_metabox_publishers' ), $this->pagehook, 'normal' );
 
 			// issues a warning notice if the default image size is too small
 			$this->p->media->get_default_image( 1, $this->p->cf['lca'].'-opengraph', false );
@@ -32,7 +34,7 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 			$metabox = 'og';
 			$tabs = apply_filters( $this->p->cf['lca'].'_'.$metabox.'_tabs', array( 
 				'general' => 'General',
-				'content' => 'Title and Description',
+				'content' => 'Title / Description',
 				'images' => 'Images',
 				'videos' => 'Videos',
 				'author' => 'Authorship' ) );
@@ -47,9 +49,10 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 			$metabox = 'pub';
 			$tabs = apply_filters( $this->p->cf['lca'].'_'.$metabox.'_tabs', array( 
 				'facebook' => 'Facebook',
-				'google' => 'Google+ and Search',
-				'pinterest' => 'Pinterest Rich Pins',
-				'twitter' => 'Twitter Cards',
+				'google' => 'Google',
+				'pinterest' => 'Pinterest',
+				'twitter' => 'Twitter',
+				'other' => 'Others',
 			) );
 			$rows = array();
 			foreach ( $tabs as $key => $title )
@@ -64,7 +67,9 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 			$this->form->author_contact_fields = $this->p->mods['util']['user']->get_contact_fields();
 
 			switch ( $metabox.'-'.$key ) {
+
 				case 'og-general':
+
 					$rows[] = $this->p->util->th( 'Default Article Topic', 'highlight', 'og_art_section' ).
 					'<td>'.$this->form->get_select( 'og_art_section', $this->p->util->get_topics() ).'</td>';
 
@@ -79,42 +84,43 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 					break;
 
 				case 'og-content':
+
 					$rows[] = $this->p->util->th( 'Title Separator', null, 'og_title_sep' ).
 					'<td>'.$this->form->get_input( 'og_title_sep', 'short' ).'</td>';
 
 					break;
 
 				case 'og-images':
+
 					$rows[] = $this->p->util->th( 'Max Images to Include', null, 'og_img_max' ).
 					'<td>'.$this->form->get_select( 'og_img_max', 
 						range( 0, $this->p->cf['form']['max_media_items'] ), 'short', null, true ).'</td>';
 
 					$rows[] = $this->p->util->th( 'Open Graph Image Dimensions', 'highlight', 'og_img_dimensions' ).
-					'<td>'.$this->form->get_image_dimensions_input( 'og_img', false, false, $this->p->options['plugin_display'] ).'</td>';
+					'<td>'.$this->form->get_image_dimensions_input( 'og_img', false, false ).'</td>';
 	
-					$rows[] = $this->p->util->th( 'Default Image ID', 'highlight', 'og_def_img_id' ).
+					$rows[] = $this->p->util->th( 'Default / Fallback Image ID', 'highlight', 'og_def_img_id' ).
 					'<td>'.$this->form->get_image_upload_input( 'og_def_img' ).'</td>';
 	
-					$rows[] = $this->p->util->th( 'Default Image URL', null, 'og_def_img_url' ).
+					$rows[] = $this->p->util->th( 'or Default / Fallback Image URL', null, 'og_def_img_url' ).
 					'<td>'.$this->form->get_image_url_input( 'og_def_img' ).'</td>';
 	
 					break;
 
 				case 'og-videos':
+
 					$rows[] = $this->p->util->th( 'Max Videos to Include', null, 'og_vid_max' ).
 					'<td>'.$this->form->get_select( 'og_vid_max', 
 						range( 0, $this->p->cf['form']['max_media_items'] ), 'short', null, true ).'</td>';
 	
 					break;
 
-				case 'og-author':
-					$rows[] = $this->p->util->th( 'Article Publisher Page URL', 'highlight', 'og_publisher_url' ).
-					'<td>'.$this->form->get_input( 'og_publisher_url', 'wide' ).'</td>';
-
-					break;
-
 				case 'pub-facebook':
-					$rows[] = $this->p->util->th( 'Facebook Admin(s)', 'highlight', 'fb_admins' ).
+
+					$rows[] = $this->p->util->th( 'Facebook Business Page URL', 'highlight', 'fb_publisher_url' ).
+					'<td>'.$this->form->get_input( 'fb_publisher_url', 'wide' ).'</td>';
+
+					$rows[] = $this->p->util->th( 'Facebook Admin Username(s)', 'highlight', 'fb_admins' ).
 					'<td>'.$this->form->get_input( 'fb_admins' ).'</td>';
 
 					$rows[] = $this->p->util->th( 'Facebook Application ID', null, 'fb_app_id' ).
@@ -122,20 +128,43 @@ if ( ! class_exists( 'NgfbSubmenuGeneral' ) && class_exists( 'NgfbAdmin' ) ) {
 
 					$rows[] = $this->p->util->th( 'Default Language', null, 'fb_lang' ).
 					'<td>'.$this->form->get_select( 'fb_lang', SucomUtil::get_pub_lang( 'facebook' ) ).'</td>';
+
 					break;
 
 				case 'pub-google':
-					$rows[] = $this->p->util->th( 'Publisher Link URL', 'highlight', 'google_publisher_url' ).
-					'<td>'.$this->form->get_input( 'link_publisher_url', 'wide' ).'</td>';
+
+					$rows[] = $this->p->util->th( 'Google+ Business Page URL', 'highlight', 'google_publisher_url' ).
+					'<td>'.$this->form->get_input( 'seo_publisher_url', 'wide' ).'</td>';
 
 					break;
 
 				case 'pub-pinterest':
+
 					$rows[] = '<td colspan="2" style="padding-bottom:10px;">'.$this->p->msgs->get( 'info-pub-pinterest' ).'</td>';
 
-					$rows[] = $this->p->util->th( 'Rich Pin Image Dimensions', 'highlight', 'rp_img_dimensions' ).
-					'<td>'.$this->form->get_image_dimensions_input( 'rp_img' ).'</td>';
-	
+					$rows[] = $this->p->util->th( 'Pinterest Company Page URL', null, 'rp_publisher_url'  ).
+					'<td>'.$this->form->get_input( 'rp_publisher_url', 'wide' ).'</td>';
+
+					break;
+
+				case 'pub-twitter':
+
+					$rows[] = $this->p->util->th( 'Twitter Business @username', 'highlight', 'tc_site' ).
+					'<td>'.$this->form->get_input( 'tc_site' ).'</td>';
+
+					break;
+
+				case 'pub-other':
+
+					$rows[] = $this->p->util->th( 'Instagram Business URL', null, 'instgram_publisher_url' ).
+					'<td>'.$this->form->get_input( 'instgram_publisher_url', 'wide' ).'</td>';
+
+					$rows[] = $this->p->util->th( 'LinkedIn Company Page URL', null, 'linkedin_publisher_url'  ).
+					'<td>'.$this->form->get_input( 'linkedin_publisher_url', 'wide' ).'</td>';
+
+					$rows[] = $this->p->util->th( 'MySpace Business (Brand) URL', null, 'myspace_publisher_url'  ).
+					'<td>'.$this->form->get_input( 'myspace_publisher_url', 'wide' ).'</td>';
+
 					break;
 			}
 			return $rows;

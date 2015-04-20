@@ -43,20 +43,13 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 							$text = 'Individual social sharing button(s) must also be enabled below.';
 							break;
 						case 'tooltip-buttons_on_index':
-							$text = 'Add the following social sharing buttons to each entry of an index webpage (<strong>non-static</strong> 
-							homepage, category, archive, etc.). By Default, social sharing buttons are <em>not</em> included on index webpages 
-							(default is unchecked). You must also enable the buttons you want to display by choosing to show the buttons on 
-							the content or excerpt.';
+							$text = 'Add the following social sharing buttons to each entry of an index webpage (<strong>non-static</strong> homepage, category, archive, etc.). By Default, social sharing buttons are <em>not</em> included on index webpages (default is unchecked). You must also enable the buttons you want to display by choosing to show the buttons on the content or excerpt.';
 							break;
 						case 'tooltip-buttons_on_front':
-							$text = 'If a static Post or Page has been chosen for the homepage, add the following
-							social sharing buttons to the static homepage as well (default is unchecked).
-							You must also enable the buttons you want to display by choosing to show the buttons on the content or excerpt.';
+							$text = 'If a static Post or Page has been chosen for the homepage, add the following social sharing buttons to the static homepage as well (default is unchecked). You must also enable the buttons you want to display by choosing to show the buttons on the content or excerpt.';
 							break;
 						case 'tooltip-buttons_add_to':
-							$text = 'Enabled social sharing buttons are added to the Post, Page, Media and Product custom post types by default.
-							If your theme (or another plugin) supports additional custom post types, and you would like to include
-							social sharing buttons on these webpages, check the appropriate option(s) here.';
+							$text = 'Enabled social sharing buttons are added to the Post, Page, Media and Product custom post types by default. If your theme (or another plugin) supports additional custom post types, and you would like to include social sharing buttons on these webpages, check the appropriate option(s) here.';
 							break;
 						/*
 						 * Other settings
@@ -73,25 +66,26 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 		// called by each website's settings class to display a list of checkboxes
 		// Show Button in: Content, Excerpt, Admin Edit, etc.
 		protected function show_on_checkboxes( $prefix ) {
-			$cols = 0;
+			$col = 0;
+			$max = 3;
 			$html = '<table>';
 			$show_on = apply_filters( $this->p->cf['lca'].'_sharing_show_on', 
 				NgfbSharing::$cf['sharing']['show_on'], $prefix );
 			foreach ( $show_on as $suffix => $desc ) {
-				$cols++;
+				$col++;
 				$class = array_key_exists( $prefix.'_on_'.$suffix.':is', $this->p->options ) &&
 					$this->p->options[$prefix.'_on_'.$suffix.':is'] === 'disabled' &&
 					! $this->p->check->aop() ? 'show_on blank' : 'show_on';
-				if ( $cols == 1 )
+				if ( $col == 1 )
 					$html .= '<tr><td class="'.$class.'">';
 				else $html .= '<td class="'.$class.'">';
 				$html .= $this->form->get_checkbox( $prefix.'_on_'.$suffix ).$desc.'&nbsp; ';
-				if ( $cols == 3 ) {
+				if ( $col == $max ) {
 					$html .= '</td></tr>';
-					$cols = 0;
+					$col = 0;
 				} else $html .= '</td>';
 			}
-			$html .= $cols < 3 ? '</tr>' : '';
+			$html .= $col < $max ? '</tr>' : '';
 			$html .= '</table>';
 			return $html;
 		}
@@ -101,7 +95,8 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 			$row = 0;
 
 			// add_meta_box( $id, $title, $callback, $post_type, $context, $priority, $callback_args );
-			add_meta_box( $this->pagehook.'_sharing', 'Social Sharing Buttons', array( &$this, 'show_metabox_sharing' ), $this->pagehook, 'normal' );
+			add_meta_box( $this->pagehook.'_sharing', 'Social Sharing Buttons', 
+				array( &$this, 'show_metabox_sharing' ), $this->pagehook, 'normal' );
 
 			foreach ( $this->p->cf['plugin']['ngfb']['lib']['website'] as $id => $name ) {
 				$classname = __CLASS__.$id;
@@ -110,19 +105,22 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 					$row = $col == 1 ? $row + 1 : $row;
 					$pos_id = 'website-row-'.$row.'-col-'.$col;
 					$name = $name == 'GooglePlus' ? 'Google+' : $name;
-					add_meta_box( $this->pagehook.'_'.$id, $name, array( &$this->website[$id], 'show_metabox_website' ), $this->pagehook, $pos_id );
-					add_filter( 'postbox_classes_'.$this->pagehook.'_'.$this->pagehook.'_'.$id, array( &$this, 'add_class_postbox_website' ) );
-					$this->website[$id]->form = &$this->get_form_ref();
+					add_meta_box( $this->pagehook.'_'.$id, $name, 
+						array( &$this->website[$id], 'show_metabox_website' ), $this->pagehook, $pos_id );
+					add_filter( 'postbox_classes_'.$this->pagehook.'_'.$this->pagehook.'_'.$id, 
+						array( &$this, 'add_class_postbox_website' ) );
+					$this->website[$id]->form = &$this->get_form_reference();
 				}
 			}
 
 			// these metabox ids should be closed by default (array_diff() selects everything except those listed)
-			$ids = array_diff( array_keys( $this->p->cf['plugin']['ngfb']['lib']['website'] ), array( 'facebook', 'gplus', 'twitter' ) );
+			$ids = array_diff( array_keys( $this->p->cf['plugin']['ngfb']['lib']['website'] ), 
+				array( 'facebook', 'gplus', 'twitter' ) );
 			$this->p->mods['util']['user']->reset_metabox_prefs( $this->pagehook, $ids, 'closed' );
 		}
 
 		public function add_class_postbox_website( $classes ) {
-			array_push( $classes, 'display_'.$this->p->options['plugin_display'] );
+			array_push( $classes, 'display_'.NgfbUser::show_opts() );
 			array_push( $classes, 'admin_postbox_website' );
 			return $classes;
 		}
@@ -134,7 +132,7 @@ if ( ! class_exists( 'NgfbSubmenuSharing' ) && class_exists( 'NgfbAdmin' ) ) {
 				'position' => 'Buttons Position' 
 			);
 
-			if ( $this->p->options['plugin_display'] == 'all' )
+			if ( NgfbUser::show_opts( 'all' ) )
 				$tabs['preset'] = 'Preset Options';
 
 			$tabs = apply_filters( $this->p->cf['lca'].'_'.$metabox.'_tabs', $tabs );
