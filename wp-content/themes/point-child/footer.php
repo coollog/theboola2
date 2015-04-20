@@ -107,6 +107,11 @@
     border-color: #2c36ed;
     color: #2c36ed;
   }
+  @media screen and (max-width: 865px) {
+    .bottomsep {
+      display: none;
+    }
+  }
 </style>
 <div id="bottom">
   <div class="bottomcenter">
@@ -122,7 +127,7 @@
       Web development by Qingyang Chen and Tony Jiang
     </div>
     <div class="bottomlinks">
-      <a href=""><div class="bottomlink bottomlinksubscribe">Subscribe</div></a>
+      <a href="#sml_subscribe_widget"><div class="bottomlink bottomlinksubscribe">Subscribe</div></a>
       <a href="/about"><div class="bottomlink">About</div></a>
       <a href="/contact"><div class="bottomlink">Contact</div></a>
     </div>
