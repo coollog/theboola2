@@ -254,6 +254,11 @@
 				</div>
 		</header>
 
+		<style>
+			.tonynav {
+				font-size: 0.5em;
+			}
+		</style>
 		<div class="secondary-navigation tonynav">
 			<nav id="navigation" >
         <a href="" class="tonynav" id="top-menu" onclick="return false;">Menu</a>
