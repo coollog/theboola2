@@ -307,7 +307,7 @@
 				right: 10px;
 				bottom: 10px;
 				font-family: "League Gothic", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-				font-size: 30px;
+				font-size: 20px;
 				color: #fff;
 				line-height: 1.2em;
 			}
